@@ -1,1 +1,1 @@
-conda env update --prefix ./.conda --file environment.yml
+conda env update --name p14 --file environment.yml

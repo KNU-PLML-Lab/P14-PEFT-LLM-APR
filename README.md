@@ -55,5 +55,43 @@ python main.py --task train
 ```bash
 # Sample Defects4J (Lang project, 1st bug)
 defects4j checkout -p Lang -v 1b -w Lang_1_buggy
-defects4j checkout -p Lang -v 1f -w Lang_1_fixed 
+defects4j checkout -p Lang -v 1f -w Lang_1_fixed
+```
+
+extra...
+```bash
+# for matplotlib
+sudo apt install libxcb-cursor0
+```
+
+## Reference
+- https://llama.meta.com/docs/how-to-guides/fine-tuning/
+- https://github.com/microsoft/CodeXGLUE
+
+
+## Memo
+```
+conda env update --name p14 --file environment.yml
+pip install git+https://github.com/huggingface/transformers
+pip install git+https://github.com/bitsandbytes-foundation/bitsandbytes
+pip install transformers -U
+pip install 'accelerate>=0.26.0'
+pip install 'bitsandbytes>=0.41.3'
+pip install flash-attn --no-build-isolation --no-cache-dir
+pip install fuzzywuzzy
+pip install bitsandbytes --no-build-isolation --no-cache-dir
+pip install peft --no-build-isolation --no-cache-dir
+pip install sentencepiece
+pip install protobuf
+
+wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
+sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/3bf863cc.pub
+sudo add-apt-repository 'deb https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/ /'
+sudo apt-get update
+sudo apt-get -y install cuda
+sudo apt install nvidia-cuda-toolkit
+nvcc --version
+
+ln -s /usr/lib/wsl/lib/libcuda.so /home/stgr/miniconda3/envs/p14_3/lib/libcuda.so
 ```
