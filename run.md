@@ -124,6 +124,9 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
 
 ## Benchmarks
 ```bash
+# --do_humaneval
+# --do_quixbugs
+
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
   --output_dir ../../nosync/output/incoder_6b_v2 \
@@ -140,5 +143,5 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval
+  --do_quixbugs
 ```

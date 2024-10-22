@@ -112,6 +112,7 @@ class GenerationArguments:
 
   # Evaluation
   do_humaneval: Optional[bool] = field(default=False, metadata={"help": "Whether to run the humaneval evaluation."})
+  do_quixbugs: Optional[bool] = field(default=False, metadata={"help": "Whether to run the quixbugs evaluation."})
 
 def parse_args():
   hfparser = transformers.HfArgumentParser((

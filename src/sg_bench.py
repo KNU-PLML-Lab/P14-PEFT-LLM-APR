@@ -47,7 +47,16 @@ def generate_input(
 
   # 생성 루프
   for line in loc_fp.readlines():
-    filename, rem_loc = line.strip().split()
+    filename = None
+    rem_loc = None
+    _add_loc = None
+    if bench_type == 'humaneval':
+      filename, rem_loc = line.strip().split()
+    elif bench_type == 'quixbugs':
+      filename, rem_loc, _add_loc = line.strip().split()
+    else:
+      raise ValueError(f'❌ unrecognized bench_type {bench_type}')
+
     start, end = rem_loc.split('-')
     end = str(int(end) - 1) if end != start else end
     tmp_file = os.path.join(bench_path, 'tmp.json')
@@ -263,7 +272,33 @@ def main():
     )
     print(f"==========Output written to {output_file}==========")
 
+  if generation_args.do_quixbugs:
+    run_type = 'finetune'
+    bench_type = 'quixbugs'
+    input_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_input.json')
+    output_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_output.json')
+    if not os.path.exists(input_file):
+      print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
+      generate_input(
+        run_type = run_type,
+        bench_type = bench_type,
+        bench_path = QUIXBUGS_DIR,
+        loc_file = QUIXBUGS_LOC_FILE,
+        java_project_path = JASPER_DIR,
+        output_file = input_file
+      )
+      print(f"==========Input written to {input_file}==========")
+    
+    print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
+    generate_output(
+      model_name = model_name,
+      model = model,
+      tokenizer = tokenizer,
+      input_file = input_file,
+      output_file = output_file,
+      args = generation_args,
+    )
+    print(f"==========Output written to {output_file}==========")
+
 if __name__ == '__main__':
   main()
-
-
