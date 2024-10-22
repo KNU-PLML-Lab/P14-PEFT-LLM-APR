@@ -266,28 +266,4 @@ def main():
 if __name__ == '__main__':
   main()
 
-"""
-CUDA_VISIBLE_DEVICES=0 python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
-  --output_dir ../../nosync/output/incoder_6b_v2 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_humaneval
-"""
 
-"""
-CUDA_VISIBLE_DEVICES=0 python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/code_llama-7b-hf \
-  --output_dir ./nosync/output/codellama_7b_v2 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_humaneval
-"""
-
-# CUDA_VISIBLE_DEVICES=2 python humaneval_codegen_finetune.py
-#model_name_or_path = '/home/yglee/WorkspaceLabModels/incoder-6B'
-#adapter_path = '/home/yglee/wl/p14/external/clm/nosync/output/incoder_6b_v2'
