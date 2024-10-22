@@ -1,14 +1,23 @@
 import codecs
 import json
 import os
+import sys
 
 import numpy
+import shutil
 import torch
 import transformers
 
 import sg_args
 import sg_model
 import sg_tools
+
+# clm의 코드 가져오기
+C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
+sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/humaneval/'))
+import humaneval_command
+sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/'))
+import quixbugs_command
 
 
 
@@ -215,6 +224,100 @@ def generate_output(
 
 
 
+def insert_fix(filename, start_line, end_line, patch):
+  """
+  end_row is included in the buggy lines / buggy function
+  """
+  with open(filename, 'r') as file:
+    data = file.readlines()
+
+  with open(filename, 'w') as file:
+    for i in range(start_line - 1):
+      file.write(data[i] + '\n')
+    file.write(patch.strip())
+    for i in range(end_line, len(data)):
+      file.write(data[i])
+
+
+
+# TODO: 지금 finetune에 대해서만 구현되어 있음!
+def validate_quixbugs(
+  model_name: str,
+  tokenizer: transformers.PreTrainedTokenizer,
+  input_file: str,
+  output_file: str,
+  tmp_dir: str
+):
+  model_name = model_name.lower()
+  plausible, total = 0, 0
+
+  if not os.path.exists(tmp_dir):
+    quixbugs_command.command_with_timeout(['mkdir', tmp_dir])
+
+  # INJECTED: java_programs_bak 폴더가 없으면 java_programs를 복사
+  if not os.path.exists(tmp_dir + "/java_programs_bak"):
+    print('📂 java_programs_bak not found. Copy java_programs to java_programs_bak. This is only one-time operation...')
+    shutil.copytree(tmp_dir + "/java_programs", tmp_dir + "/java_programs_bak")
+
+  model_output = json.load(open(input_file, 'r'))
+  validated_result = {'config': model_output['config'], 'data': {}}
+  for proj in model_output['data']:
+    print('start validating', proj)
+    total += 1
+    quixbugs_command.command_with_timeout(['rm', '-rf', tmp_dir + '/java_programs/'])
+    quixbugs_command.command_with_timeout(['mkdir', tmp_dir + '/java_programs/'])
+
+    shutil.copyfile(tmp_dir + "/java_programs_bak/" + proj + '.java',
+                    tmp_dir + "/java_programs/" + proj + '.java')
+    shutil.copyfile(tmp_dir + "/java_programs_bak/Node.java", tmp_dir + "/java_programs/Node.java")
+    shutil.copyfile(tmp_dir + "/java_programs_bak/WeightedEdge.java", tmp_dir + "/java_programs/WeightedEdge.java")
+
+    validated_result['data'][proj] = {}
+    for key, value in model_output['data'][proj].items():
+      if key != 'output':
+        validated_result['data'][proj][key] = value
+    validated_result['data'][proj]['output'] = []
+    start_line, end_line = validated_result['data'][proj]['loc'].split('-')
+    end_line = str(int(end_line) - 1) if end_line != start_line else end_line
+    current_is_correct = False
+    for rank, patch in enumerate(model_output['data'][proj]['output']):
+      filename = tmp_dir + "/java_programs/" + proj + '.java'
+
+      EOS_STR = None
+      if 'incoder' in model_name:
+        print('🧂 incoder model detected. add EOS token (<|endofmask|>)')
+        EOS_STR = '<|endofmask|>'
+      else:
+        EOS_STR = tokenizer.eos_token
+      patch = sg_tools.ft_output_to_patch(patch, EOS_STR)
+      insert_fix(filename, int(start_line), int(end_line), patch)
+      
+      compile = quixbugs_command.compile_fix(filename, tmp_dir + "/java_programs/")
+      correctness = 'uncompilable'
+      if compile:
+        correctness = quixbugs_command.quixbugs_test_suite(proj, quixbugs_dir=tmp_dir)
+        if correctness == 'plausible':
+          if not current_is_correct:
+            plausible += 1
+            current_is_correct = True
+          print(plausible, total, rank, "Plausible patch:", patch)
+        elif correctness == 'wrong':
+          print(plausible, total, rank, "Wrong patch:", patch)
+        elif correctness == 'timeout':
+          print(plausible, total, rank, "Timeout patch:", patch)
+      else:
+        print(plausible, total, rank, 'Uncompilable patch:', patch)
+      validated_result['data'][proj]['output'].append({
+        'patch': patch, 'correctness': correctness
+      })
+      shutil.copyfile(
+        tmp_dir + "/java_programs_bak/" + proj + '.java',
+        tmp_dir + "/java_programs/" + proj + '.java'
+      )
+    json.dump(validated_result, open(output_file, 'w'), indent=2)
+
+
+
 def main():
   (
     args,
@@ -245,60 +348,78 @@ def main():
 
   # Humaneval 테스트
   if generation_args.do_humaneval:
+
     run_type = 'finetune'
     bench_type = 'humaneval'
     input_file = os.path.join(os.path.abspath(args.output_dir), 'humaneval_finetune_input.json')
     output_file = os.path.join(os.path.abspath(args.output_dir), 'humaneval_finetune_output.json')
-    if not os.path.exists(input_file):
-      print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
-      generate_input(
-        run_type = run_type,
-        bench_type = bench_type,
-        bench_path = HUMANEVAL_DIR,
-        loc_file = HUMANEVAL_LOC_FILE,
-        java_project_path = JASPER_DIR,
-        output_file = input_file
+    validate_file = os.path.join(os.path.abspath(args.output_dir), 'humaneval_finetune_validate.json')
+
+    if generation_args.do_generate:
+      if not os.path.exists(input_file):
+        print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
+        generate_input(
+          run_type = run_type,
+          bench_type = bench_type,
+          bench_path = HUMANEVAL_DIR,
+          loc_file = HUMANEVAL_LOC_FILE,
+          java_project_path = JASPER_DIR,
+          output_file = input_file
+        )
+        print(f"==========Input written to {input_file}==========")
+      
+      print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      generate_output(
+        model_name = model_name,
+        model = model,
+        tokenizer = tokenizer,
+        input_file = input_file,
+        output_file = output_file,
+        args = generation_args,
       )
-      print(f"==========Input written to {input_file}==========")
-    
-    print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
-    generate_output(
-      model_name = model_name,
-      model = model,
-      tokenizer = tokenizer,
-      input_file = input_file,
-      output_file = output_file,
-      args = generation_args,
-    )
-    print(f"==========Output written to {output_file}==========")
+      print(f"==========Output written to {output_file}==========")
 
   if generation_args.do_quixbugs:
     run_type = 'finetune'
     bench_type = 'quixbugs'
     input_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_input.json')
     output_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_output.json')
-    if not os.path.exists(input_file):
-      print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
-      generate_input(
-        run_type = run_type,
-        bench_type = bench_type,
-        bench_path = QUIXBUGS_DIR,
-        loc_file = QUIXBUGS_LOC_FILE,
-        java_project_path = JASPER_DIR,
-        output_file = input_file
+    validate_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_validate.json')
+
+    if generation_args.do_generate:
+      if not os.path.exists(input_file):
+        print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
+        generate_input(
+          run_type = run_type,
+          bench_type = bench_type,
+          bench_path = QUIXBUGS_DIR,
+          loc_file = QUIXBUGS_LOC_FILE,
+          java_project_path = JASPER_DIR,
+          output_file = input_file
+        )
+        print(f"==========Input written to {input_file}==========")
+      
+      print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      generate_output(
+        model_name = model_name,
+        model = model,
+        tokenizer = tokenizer,
+        input_file = input_file,
+        output_file = output_file,
+        args = generation_args,
       )
-      print(f"==========Input written to {input_file}==========")
+      print(f"==========Output written to {output_file}==========")
     
-    print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
-    generate_output(
-      model_name = model_name,
-      model = model,
-      tokenizer = tokenizer,
-      input_file = input_file,
-      output_file = output_file,
-      args = generation_args,
-    )
-    print(f"==========Output written to {output_file}==========")
+    if generation_args.do_validate:
+      print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      validate_quixbugs(
+        model_name = model_name,
+        tokenizer = tokenizer,
+        input_file = output_file,
+        output_file = validate_file,
+        tmp_dir = QUIXBUGS_DIR
+      )
+      print(f"==========Output validated. Written to {validate_file}==========")
 
 if __name__ == '__main__':
   main()

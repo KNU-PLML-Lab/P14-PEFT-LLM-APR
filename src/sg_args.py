@@ -88,6 +88,14 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
 class GenerationArguments:
   # For more hyperparameters check:
   # https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig
+
+  # Benchmark type
+  do_humaneval: Optional[bool] = field(default=False, metadata={"help": "Whether to run the humaneval evaluation."})
+  do_quixbugs: Optional[bool] = field(default=False, metadata={"help": "Whether to run the quixbugs evaluation."})
+
+  # Patch generation & validation
+  do_generate: Optional[bool] = field(default=False, metadata={"help": "Patch code generation form benchmark data."})
+  do_validate: Optional[bool] = field(default=False, metadata={"help": "Validate the generated patches."})
   
   # Generation strategy
   do_sample: Optional[bool] = field(default=False)
@@ -110,9 +118,6 @@ class GenerationArguments:
   length_penalty: Optional[float] = field(default=1.0)
   no_repeat_ngram_size: Optional[int] = field(default=0)
 
-  # Evaluation
-  do_humaneval: Optional[bool] = field(default=False, metadata={"help": "Whether to run the humaneval evaluation."})
-  do_quixbugs: Optional[bool] = field(default=False, metadata={"help": "Whether to run the quixbugs evaluation."})
 
 def parse_args():
   hfparser = transformers.HfArgumentParser((

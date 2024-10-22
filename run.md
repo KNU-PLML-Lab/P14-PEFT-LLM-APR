@@ -127,14 +127,30 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
 # --do_humaneval
 # --do_quixbugs
 
+# --do_generate
+# --do_validate
+
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
-  --output_dir ../../nosync/output/incoder_6b_v2 \
+  --output_dir ./nosync/output/codegen_6b_v2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
+  --output_dir ./nosync/output/incoder_6b_v2 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/code_llama-7b-hf \
@@ -143,5 +159,6 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_quixbugs
+  --do_quixbugs \
+  --do_validate
 ```
