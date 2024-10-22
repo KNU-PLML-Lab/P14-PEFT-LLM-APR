@@ -56,6 +56,11 @@ python main.py --task train
 # Sample Defects4J (Lang project, 1st bug)
 defects4j checkout -p Lang -v 1b -w Lang_1_buggy
 defects4j checkout -p Lang -v 1f -w Lang_1_fixed
+
+###### jasper init
+cd clm/jasper
+mkdir target
+javac -cp ".:lib/*" -d target src/main/java/clm/jasper/*.java src/main/java/clm/codet5/*.java src/main/java/clm/codegen/*.java src/main/java/clm/plbart/*.java src/main/java/clm/incoder/*.java src/main/java/clm/finetuning/*.java
 ```
 
 extra...

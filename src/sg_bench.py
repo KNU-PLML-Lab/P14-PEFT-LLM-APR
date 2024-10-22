@@ -217,11 +217,11 @@ def main():
   ) = sg_args.parse_args()
 
   C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
-  JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../../jasper/'))
-  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../../humaneval-java/'))
-  HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../humaneval/humaneval_loc.txt'))
-  QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../quixbugs/'))
-  QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../quixbugs/quixbugs_loc.txt'))
+  JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/jasper/'))
+  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java/'))
+  HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/humaneval/humaneval_loc.txt'))
+  QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../QuixBugs/'))
+  QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/quixbugs_loc.txt'))
   # DEFAULT_PAD_TOKEN = "[PAD]"
 
   # AutoTokenizer가 CodeLlamaTokenizer를 인식하지 못함
@@ -267,20 +267,20 @@ if __name__ == '__main__':
   main()
 
 """
-CUDA_VISIBLE_DEVICES=0 python sg_bench.py \
+CUDA_VISIBLE_DEVICES=0 python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
   --output_dir ../../nosync/output/incoder_6b_v2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
-  --max_new_tokens 64 \
+  --max_new_tokens 128 \
   --do_humaneval
 """
 
 """
-CUDA_VISIBLE_DEVICES=0 python sg_bench.py \
+CUDA_VISIBLE_DEVICES=0 python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/code_llama-7b-hf \
-  --output_dir ../../nosync/output/codellama_7b_v2 \
+  --output_dir ./nosync/output/codellama_7b_v2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
