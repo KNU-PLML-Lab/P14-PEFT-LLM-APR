@@ -4,3 +4,6 @@
 [submodule "sg_utils"]
 	path = sg_utils
 	url = git@github.com:SemteulGaram/sg_utils_python.git
+[submodule "QuixBugs"]
+	path = QuixBugs
+	url = https://github.com/jkoppel/QuixBugs
