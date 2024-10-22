@@ -7,3 +7,6 @@
 [submodule "QuixBugs"]
 	path = QuixBugs
 	url = https://github.com/jkoppel/QuixBugs
+[submodule "clm"]
+	path = clm
+	url = https://github.com/lin-tan/clm
