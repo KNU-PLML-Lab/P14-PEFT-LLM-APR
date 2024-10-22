@@ -1,3 +1,6 @@
 [submodule "defects4j"]
 	path = defects4j
 	url = https://github.com/rjust/defects4j.git
+[submodule "sg_utils"]
+	path = sg_utils
+	url = git@github.com:SemteulGaram/sg_utils_python.git
