@@ -14,9 +14,9 @@ import sg_tools
 
 # clm의 코드 가져오기
 C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
-sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/humaneval/'))
+# sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/humaneval/'))
 import humaneval_command
-sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/'))
+# sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/'))
 import quixbugs_command
 
 
@@ -104,6 +104,9 @@ def generate_input(
 
     print(f'📜 {filename} input generated. read it...')
     result = json.load(open(tmp_file, 'r'))
+    # result is None or empty dict throw error
+    if not result or not result['buggy function before']:
+      raise ValueError(f'❌ {filename} failed. tmp file is empty')
 
     if run_type == 'finetune':
       input_dict['data'][filename] = {
@@ -155,70 +158,77 @@ def generate_output(
   memory_allocated, memory_reserved = 0, 0
 
   # 실행 루프
-  for filename in input_dict['data']:
-    print(f'🏭 Generating {filename}...')
-    input_text = input_dict['data'][filename]['input']
+  with torch.no_grad():
+    for filename in input_dict['data']:
+      print(f'🏭 Generating {filename}...')
+      input_text = input_dict['data'][filename]['input']
 
-    # 모델별 토크나이징 전처리
-    input_emb = tokenizer(input_text, return_tensors="pt").to('cuda')
-    inputs = {}
-    eos_id = None
-    if is_incoder:
-      inputs['input_ids'] = input_emb.input_ids.to(device)
-      # incoder의 경우 EOS 토큰을 '<|endofmask|>'로 지정
-      eos_id = tokenizer.convert_tokens_to_ids('<|endofmask|>')
-    else: 
-      inputs = input_emb.to(device)
-      eos_id = tokenizer.convert_tokens_to_ids(tokenizer.eos_token)
+      # 모델별 토크나이징 전처리
+      input_emb = tokenizer(input_text, return_tensors="pt").to('cuda')
+      inputs = {}
+      eos_id = None
+      if is_incoder:
+        inputs['input_ids'] = input_emb.input_ids.to(device)
+        # incoder의 경우 EOS 토큰을 '<|endofmask|>'로 지정
+        eos_id = tokenizer.convert_tokens_to_ids('<|endofmask|>')
+      else: 
+        inputs = input_emb.to(device)
+        eos_id = tokenizer.convert_tokens_to_ids(tokenizer.eos_token)
 
-    starter.record()
-    try:
-      # print(input_emb.input_ids.dtype)
-      # print(input_emb.attention_mask.dtype)
-      generated_ids = model.generate(
-        **inputs,
-        max_new_tokens = args.max_new_tokens,
-        num_beams = args.num_beams,
-        num_return_sequences = args.num_beams,
-        early_stopping = True, 
-
-        pad_token_id = eos_id,
-        eos_token_id = eos_id,
-
-        generation_config=transformers.GenerationConfig(
-          do_sample = args.do_sample,
+      starter.record()
+      try:
+        # print(input_emb.input_ids.dtype)
+        # print(input_emb.attention_mask.dtype)
+        generated_ids = model.generate(
+          **inputs,
           max_new_tokens = args.max_new_tokens,
-          top_p = args.top_p,
-          temperature = args.temperature,
+          num_beams = args.num_beams,
+          num_return_sequences = args.num_beams,
+          early_stopping = True, 
+
+          pad_token_id = eos_id,
+          eos_token_id = eos_id,
+
+          generation_config=transformers.GenerationConfig(
+            do_sample = args.do_sample,
+            max_new_tokens = args.max_new_tokens,
+            top_p = args.top_p,
+            temperature = args.temperature,
+          ),
+          use_cache=False
         )
-      )
-    except Exception as e:
-      print(f'❌ {filename} generate failed. OOM counted. {str(e)}')
-      oom += 1
-      continue
+      except Exception as e:
+        print(f'❌ {filename} generate failed. OOM counted. {str(e)}')
+        oom += 1
+        continue
 
-    # 생성 메트릭 기록 중지
-    ender.record()
-    torch.cuda.synchronize()
-    curr_time = starter.elapsed_time(ender)
-    timings.append(curr_time)
+      # 생성 메트릭 기록 중지
+      ender.record()
+      torch.cuda.synchronize()
+      curr_time = starter.elapsed_time(ender)
+      timings.append(curr_time)
 
-    # 메모리 사용량 기록
-    total_allocated, total_reserved = 0, 0
-    total_allocated += torch.cuda.memory_allocated(torch.device(device)) / (1024 * 1024)
-    total_reserved += torch.cuda.memory_reserved(torch.device(device)) / (1024 * 1024)
-    if total_allocated > memory_allocated:
-      memory_allocated = total_allocated
-    if total_reserved > memory_reserved:
-      memory_reserved = total_reserved
-    print(f'(curr_time: {curr_time:.2f}, memory_allocated: {memory_allocated:.2f}MB, memory_reserved: {memory_reserved:.2f}MB, oom: {oom})')
+      # 메모리 사용량 기록
+      total_allocated, total_reserved = 0, 0
+      total_allocated += torch.cuda.memory_allocated(torch.device(device)) / (1024 * 1024)
+      total_reserved += torch.cuda.memory_reserved(torch.device(device)) / (1024 * 1024)
+      if total_allocated > memory_allocated:
+        memory_allocated = total_allocated
+      if total_reserved > memory_reserved:
+        memory_reserved = total_reserved
+      print(f'(curr_time: {curr_time:.2f}, memory_allocated: {memory_allocated:.2f}MB, memory_reserved: {memory_reserved:.2f}MB, oom: {oom})')
 
-    # 출력 저장
-    output = []
-    for generated_id in generated_ids:
-      output.append(tokenizer.decode(generated_id, skip_special_tokens=False))
-    input_dict['data'][filename]['output'] = output
-    json.dump(input_dict, open(output_file, 'w'), indent=2)
+      # 출력 저장
+      output = []
+      for generated_id in generated_ids:
+        output.append(tokenizer.decode(generated_id, skip_special_tokens=False))
+      input_dict['data'][filename]['output'] = output
+      json.dump(input_dict, open(output_file, 'w'), indent=2)
+
+      # 메모리 해제
+      del generated_ids
+      torch.cuda.empty_cache()
+
   input_dict['time'] = int(numpy.sum(timings) / 1000)
   json.dump(input_dict, open(output_file, 'w'), indent=2)
 
@@ -249,6 +259,14 @@ def validate_quixbugs(
   tmp_dir: str
 ):
   model_name = model_name.lower()
+
+  EOS_STR = None
+  if 'incoder' in model_name:
+    print('🧂 incoder model detected. add EOS token (<|endofmask|>)')
+    EOS_STR = '<|endofmask|>'
+  else:
+    EOS_STR = tokenizer.eos_token
+
   plausible, total = 0, 0
 
   if not os.path.exists(tmp_dir):
@@ -283,12 +301,6 @@ def validate_quixbugs(
     for rank, patch in enumerate(model_output['data'][proj]['output']):
       filename = tmp_dir + "/java_programs/" + proj + '.java'
 
-      EOS_STR = None
-      if 'incoder' in model_name:
-        print('🧂 incoder model detected. add EOS token (<|endofmask|>)')
-        EOS_STR = '<|endofmask|>'
-      else:
-        EOS_STR = tokenizer.eos_token
       patch = sg_tools.ft_output_to_patch(patch, EOS_STR)
       insert_fix(filename, int(start_line), int(end_line), patch)
       

@@ -131,19 +131,19 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
 # --do_validate
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
-  --output_dir ./nosync/output/codegen_6b_v2 \
+  --model_name_or_path ~/WorkspaceLabModels/codegen-6B \
+  --output_dir ./nosync/output/codegen_6b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
-  --max_new_tokens 128 \
+  --max_new_tokens 64 \
   --do_quixbugs \
   --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder-6B \
-  --output_dir ./nosync/output/incoder_6b_v2 \
+  --output_dir ./nosync/output/incoder_6b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
@@ -154,11 +154,17 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/code_llama-7b-hf \
-  --output_dir ./nosync/output/codellama_7b_v2 \
+  --output_dir ./nosync/output/codellama_7b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_quixbugs \
   --do_validate
+```
+
+### DEBUG QuixBugs
+```bash
+javac -cp .:java_programs:junit4-4.12.jar:hamcrest-all-1.3.jar java_testcases/junit/GCD_TEST.java
+java -cp .:java_programs:junit4-4.12.jar:hamcrest-all-1.3.jar org.junit.runner.JUnitCore java_testcases.junit.GCD_TEST
 ```
