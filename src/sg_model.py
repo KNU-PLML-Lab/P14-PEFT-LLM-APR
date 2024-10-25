@@ -127,14 +127,12 @@ def get_model_tokenizer(
   if args.full_finetune: assert args.bits in [16, 32]
 
   # *** 모델 선 로드 ***
-  print(f'loading base model {args.model_name_or_path}...')
-  # compute_dtype = torch.bfloat16#(torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+  print(f'🛤️ Loading base model {args.model_name_or_path}...')
   compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+  # compute_dtype = torch.bfloat16
   model = transformers.AutoModelForCausalLM.from_pretrained(
     args.model_name_or_path,
     cache_dir=args.cache_dir,
-    # load_in_4bit=args.bits == 4, # quantization_config와 함께 사용되지 않음
-    # load_in_8bit=args.bits == 8, # quantization_config와 함께 사용되지 않음
     device_map=device_map,
     max_memory=max_memory,
     quantization_config=transformers.BitsAndBytesConfig(
@@ -146,25 +144,26 @@ def get_model_tokenizer(
       bnb_4bit_use_double_quant=args.double_quant, # 이미 양자화된 가중치를 양자화하기 위해 중첩된 양자화 방식을 사용
       bnb_4bit_quant_type=args.quant_type, # 더 빠른 계산을 위해 bfloat16 사용
     ),
-    # torch_dtype=torch.bfloat16,#(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
     torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
+    # torch_dtype=torch.bfloat16,
     trust_remote_code=args.trust_remote_code,
     token=args.token
   )
   if compute_dtype == torch.float16 and args.bits == 4:
     if torch.cuda.is_bf16_supported():
       print('='*80)
-      print('Your GPU supports bfloat16, you can accelerate training with the argument --bf16')
+      print('⚠️ Your GPU supports bfloat16, you can accelerate training with the argument --bf16')
       print('='*80)
           
   if compute_dtype == torch.float16 and (is_ipex_available() and torch.xpu.is_available()):
     compute_dtype = torch.bfloat16
-    print('Intel XPU does not support float16 yet, so switching to bfloat16')
+    print('⚠️ Intel XPU does not support float16 yet, so switching to bfloat16')
 
   setattr(model, 'model_parallel', True)
   setattr(model, 'is_parallelizable', True)
 
-  model.config.torch_dtype=torch.bfloat16#(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+  model.config.torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
+  # model.config.torch_dtype=torch.bfloat16
 
 
   # *** 토크나이저 로드 ***
@@ -209,7 +208,7 @@ def get_model_tokenizer(
     # 누락된 경우 다른 토큰으로 분석되는 것을 방지하기 위해 추가합니다.
     # 이들은 vocabulary에 포함되어 있습니다.
     # 또한 `model.config.pad_token_id`는 `<unk>` 토큰에 해당하는 0입니다.
-    print('LLaMa Detected> Adding special tokens.')
+    print('🦙 LLaMa Detected> Adding special tokens.')
     tokenizer.add_special_tokens({
       "eos_token": tokenizer.convert_ids_to_tokens(model.config.eos_token_id),
       "bos_token": tokenizer.convert_ids_to_tokens(model.config.bos_token_id),
@@ -221,7 +220,7 @@ def get_model_tokenizer(
   # *** 모델 후 설정 ***
   # 토크나이저 조정 후에 로드 해야지만 차원 오류가 발생하지 않음
   if (not args.full_finetune) and args.do_train:
-    print('preparing model for kbit training...')
+    print('🪀 Preparing model for K-bit training...')
     # 훈련을 위해 양자화된 모델을 전처리
     model = peft.prepare_model_for_kbit_training(
       model,
@@ -238,7 +237,7 @@ def get_model_tokenizer(
         is_trainable=args.do_train
       )
     else:
-      print(f'⭐ adding LoRA modules...')
+      print(f'➕ adding LoRA modules...')
       modules = find_all_linear_names(args, model)
       config = peft.LoraConfig(
         r=args.lora_r,
@@ -251,18 +250,19 @@ def get_model_tokenizer(
       )
       model = peft.get_peft_model(model, config)
 
-  print('✂️ Modify model layer dtype...')
-  for name, module in model.named_modules():
-    if isinstance(module, peft.tuners.lora.LoraLayer):
-      if args.bf16:
-        print(f'✂️ LoraLayer module to bfloat16 ({name})')
-        module = module.to(torch.bfloat16)
-    if 'norm' in name:
-      print(f'✂️ Norm module to float32 ({name})')
-      module = module.to(torch.float32)
-    if 'lm_head' in name or 'embed_tokens' in name:
-      if hasattr(module, 'weight'):
-        if args.bf16 and module.weight.dtype == torch.float32:
-          print(f'✂️ lm_head or embed_tokens Module to bfloat16 ({name})')
+  if args.do_train:
+    print('✂️ Modify model layer dtype...')
+    for name, module in model.named_modules():
+      if isinstance(module, peft.tuners.lora.LoraLayer):
+        if args.bf16:
+          print(f'✂️ LoraLayer module to bfloat16 ({name})')
           module = module.to(torch.bfloat16)
+      if 'norm' in name:
+        print(f'✂️ Norm module to float32 ({name})')
+        module = module.to(torch.float32)
+      if 'lm_head' in name or 'embed_tokens' in name:
+        if hasattr(module, 'weight'):
+          if args.bf16 and module.weight.dtype == torch.float32:
+            print(f'✂️ lm_head or embed_tokens Module to bfloat16 ({name})')
+            module = module.to(torch.bfloat16)
   return model, tokenizer

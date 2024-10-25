@@ -21,6 +21,10 @@ import quixbugs_command
 
 
 
+pjoin = os.path.join
+
+
+
 def generate_input(
   run_type: str,
   bench_type: str,
@@ -105,7 +109,8 @@ def generate_input(
     print(f'📜 {filename} input generated. read it...')
     result = json.load(open(tmp_file, 'r'))
     # result is None or empty dict throw error
-    if not result or not result['buggy function before']:
+    # if not result or not result['buggy function before']:
+    if not result:
       raise ValueError(f'❌ {filename} failed. tmp file is empty')
 
     if run_type == 'finetune':
@@ -195,7 +200,7 @@ def generate_output(
             top_p = args.top_p,
             temperature = args.temperature,
           ),
-          use_cache=False
+          # use_cache=False
         )
       except Exception as e:
         print(f'❌ {filename} generate failed. OOM counted. {str(e)}')
@@ -226,27 +231,108 @@ def generate_output(
       json.dump(input_dict, open(output_file, 'w'), indent=2)
 
       # 메모리 해제
-      del generated_ids
-      torch.cuda.empty_cache()
+      # del generated_ids
+      # torch.cuda.empty_cache()
 
   input_dict['time'] = int(numpy.sum(timings) / 1000)
   json.dump(input_dict, open(output_file, 'w'), indent=2)
 
 
 
-def insert_fix(filename, start_line, end_line, patch):
-  """
-  end_row is included in the buggy lines / buggy function
-  """
-  with open(filename, 'r') as file:
-    data = file.readlines()
+def validate_humaneval(
+  model_name: str,
+  tokenizer: transformers.PreTrainedTokenizer,
+  input_file: str,
+  output_file: str,
+  tmp_dir: str
+):
+  # INJECTED: debug name and EOS token
+  model_name = model_name.lower()
 
-  with open(filename, 'w') as file:
-    for i in range(start_line - 1):
-      file.write(data[i] + '\n')
-    file.write(patch.strip())
-    for i in range(end_line, len(data)):
-      file.write(data[i])
+  EOS_STR = None
+  if 'incoder' in model_name:
+    print('🧂 incoder model detected. add EOS token (<|endofmask|>)')
+    EOS_STR = '<|endofmask|>'
+  else:
+    EOS_STR = tokenizer.eos_token
+  # INJECTED END
+
+  plausible, total = 0, 0
+
+  # INJECTED: src_bak 폴더가 없으면 src를 복사
+  if not os.path.exists(os.path.join(tmp_dir, 'src_bak')):
+    print('📂 src_bak not found. Copy src to src_bak. This is only one-time operation...')
+    shutil.copytree(
+      os.path.join(tmp_dir, 'src'),
+      os.path.join(tmp_dir, 'src_bak')
+    )
+  # INJECTED END
+
+  humaneval_command.command_with_timeout(['rm', '-rf', os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/')])
+  humaneval_command.command_with_timeout(['mkdir', os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/')])
+  humaneval_command.command_with_timeout(['rm', '-rf', os.path.join(tmp_dir, 'src/test/java/humaneval/')])
+  humaneval_command.command_with_timeout(['mkdir', os.path.join(tmp_dir, 'src/test/java/humaneval/')])
+
+  model_output = json.load(open(input_file, 'r'))
+  validated_result = {'config': model_output['config'], 'data': {}}
+  # validated_result = json.load(open(output_file, 'r'))
+  for proj in model_output['data']:
+    if proj in validated_result['data']:
+      continue
+
+    print('start validating', proj)
+    total += 1
+
+    if 'output' not in model_output['data'][proj]:
+      continue
+
+    humaneval_command.command_with_timeout(['rm', '-rf', os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/*.java')])
+    humaneval_command.command_with_timeout(['rm', '-rf', os.path.join(tmp_dir, 'src/test/java/humaneval/*.java')])
+    shutil.copyfile(
+      os.path.join(tmp_dir, 'src_bak/main/java/humaneval/buggy/' + proj + '.java'),
+      os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/' + proj + '.java')
+    )
+    shutil.copyfile(
+      os.path.join(tmp_dir, 'src_bak/test/java/humaneval/TEST_' + proj + '.java'),
+      os.path.join(tmp_dir, 'src/test/java/humaneval/TEST_' + proj + '.java')
+    )
+    
+    validated_result['data'][proj] = {}
+    for key, value in model_output['data'][proj].items():
+      if key != 'output':
+        validated_result['data'][proj][key] = value
+    validated_result['data'][proj]['output'] = []
+    start_line, end_line = validated_result['data'][proj]['loc'].split('-')
+    end_line = str(int(end_line) - 1) if end_line != start_line else end_line
+    current_is_correct = False
+    for rank, patch in enumerate(model_output['data'][proj]['output']):
+      filename = os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/' + proj + '.java')
+      
+      # INJECT: 통합 patch 추출 및 insertion
+      patch = sg_tools.ft_output_to_patch(patch, EOS_STR)
+      sg_tools.insert_fix(filename, int(start_line), int(end_line), patch)
+      # INJECT END
+      
+      correctness = humaneval_command.humaneval_test_suite(proj, tmp_dir)
+      if correctness == 'plausible':
+        if not current_is_correct:
+          plausible += 1
+          current_is_correct = True
+        print(plausible, total, rank, "Plausible patch:", patch)
+      elif correctness == 'wrong':
+        print(plausible, total, rank, "Wrong patch:", patch)
+      elif correctness == 'timeout':
+        print(plausible, total, rank, "Timeout patch:", patch)
+      elif correctness == 'uncompilable':
+        print(plausible, total, rank, "Uncompilable patch:", patch)
+      validated_result['data'][proj]['output'].append({
+        'patch': patch, 'correctness': correctness
+      })
+      shutil.copyfile(
+        os.path.join(tmp_dir, 'src_bak/main/java/humaneval/buggy/' + proj + '.java'),
+        os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/' + proj + '.java')
+      )
+    json.dump(validated_result, open(output_file, 'w'), indent=2)
 
 
 
@@ -258,6 +344,7 @@ def validate_quixbugs(
   output_file: str,
   tmp_dir: str
 ):
+  # INJECT: debug name and EOS token
   model_name = model_name.lower()
 
   EOS_STR = None
@@ -266,16 +353,21 @@ def validate_quixbugs(
     EOS_STR = '<|endofmask|>'
   else:
     EOS_STR = tokenizer.eos_token
+  # INJECT END
 
   plausible, total = 0, 0
 
   if not os.path.exists(tmp_dir):
     quixbugs_command.command_with_timeout(['mkdir', tmp_dir])
 
-  # INJECTED: java_programs_bak 폴더가 없으면 java_programs를 복사
-  if not os.path.exists(tmp_dir + "/java_programs_bak"):
+  # INJECT: java_programs_bak 폴더가 없으면 java_programs를 복사
+  if not os.path.exists(os.path.join(tmp_dir, "java_programs_bak")):
     print('📂 java_programs_bak not found. Copy java_programs to java_programs_bak. This is only one-time operation...')
-    shutil.copytree(tmp_dir + "/java_programs", tmp_dir + "/java_programs_bak")
+    shutil.copytree(
+      os.path.join(tmp_dir, "java_programs"),
+      os.path.join(tmp_dir, "java_programs_bak")
+    )
+  # INJECT END
 
   model_output = json.load(open(input_file, 'r'))
   validated_result = {'config': model_output['config'], 'data': {}}
@@ -301,9 +393,11 @@ def validate_quixbugs(
     for rank, patch in enumerate(model_output['data'][proj]['output']):
       filename = tmp_dir + "/java_programs/" + proj + '.java'
 
+      # INJECT: 통합 patch 추출 및 insertion
       patch = sg_tools.ft_output_to_patch(patch, EOS_STR)
-      insert_fix(filename, int(start_line), int(end_line), patch)
-      
+      sg_tools.insert_fix(filename, int(start_line), int(end_line), patch)
+      # INJECT END
+
       compile = quixbugs_command.compile_fix(filename, tmp_dir + "/java_programs/")
       correctness = 'uncompilable'
       if compile:
@@ -390,6 +484,17 @@ def main():
         args = generation_args,
       )
       print(f"==========Output written to {output_file}==========")
+
+    if generation_args.do_validate:
+      print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      validate_humaneval(
+        model_name = model_name,
+        tokenizer = tokenizer,
+        input_file = output_file,
+        output_file = validate_file,
+        tmp_dir = HUMANEVAL_DIR
+      )
+      print(f"==========Output validated. Written to {validate_file}==========")
 
   if generation_args.do_quixbugs:
     run_type = 'finetune'
