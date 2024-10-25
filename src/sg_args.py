@@ -48,6 +48,8 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
   double_quant: bool = field(default=True, metadata={"help": "Compress the quantization statistics through double quantization."})
   quant_type: str = field(default="nf4", metadata={"help": "Quantization data type to use. Should be one of `fp4` or `nf4`."})
   bits: int = field(default=4, metadata={"help": "How many bits to use."})
+  fp16: bool = field(default=False, metadata={"help": "Use fp16."})
+  bf16: bool = field(default=True, metadata={"help": "Use bfloat16."})
   lora_r: int = field(default=64, metadata={"help": "Lora R dimension."})
   lora_alpha: float = field(default=16, metadata={"help": " Lora alpha."})
   lora_dropout: float = field(default=0.1, metadata={"help":"Lora dropout."})

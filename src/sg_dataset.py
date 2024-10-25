@@ -81,7 +81,7 @@ class SgDataset(torch.utils.data.Dataset):
         'labels': torch.cat(
           [torch.zeros(1, inputs.size(1) - outputs.size(1)).fill_(IGNORE_INDEX).long(), outputs], dim=1
         ),
-        'attention_mask': torch.ones(inputs.size()).long()
+        'attention_mask': torch.ones(inputs.size(), dtype=torch.bool)
       })
 
       if len(self.data) % 10000 == 0:
@@ -104,123 +104,7 @@ class SgDataset(torch.utils.data.Dataset):
   
   def __getitem__(self, item):
     return self.data[item]
-
-
-
-class SgDataset2(torch.utils.data.Dataset):
-  def __init__(
-    self,
-    file_path: str,
-    tokenizer,
-    max_length=1024,
-    shuffle=False,
-    load_range=None,
-    num_proc=None
-  ):
-    self.tokenizer = tokenizer
-    self.tokenizer_name = sg_tools.nomalize_name_or_path_to_name(tokenizer.name_or_path)
-    self.max_length = max_length
-    self.num_proc = num_proc or os.cpu_count()
-
-    # 전처리 된 데이터 파일 이름
-    ext = file_path.split('.')[-1] if '.' in file_path else ''
-    origin_file_path_wo_ext = file_path.replace(f'.{ext}', '') if ext else file_path
-    self.preprocessed_file_path = f"{origin_file_path_wo_ext}_name_{self.tokenizer_name}_cut_{self.max_length}.{ext}"
-
-    self.data = self._load_and_process_data(file_path, load_range, shuffle)
-    print(f'🍞 Total size ({file_path}): {len(self.data)}')
-
-
-  def __len__(self):
-    return len(self.data)
-
-
-  def __getitem__(self, item):
-    return self.data[item]
-
-
-  def _preprocess_line(self, line):
-    """단일 라인 전처리 함수"""
-    line = eval(line)
-    inputs = (
-      line['buggy function before'] + '// buggy lines start:\n' +
-      line['buggy line'] + '// buggy lines end\n' +
-      line['buggy function after'] + '// fixed lines:\n' +
-      line['fixed line'] + self.tokenizer.eos_token
-    )
-    outputs = line['fixed line'] + self.tokenizer.eos_token
-    return {'input': inputs, 'output': outputs}
-
-
-  def _tokenize_item(self, item):
-    """단일 아이템 토큰화 함수"""
-    try: 
-      inputs = self.tokenizer.encode(item['input'], return_tensors='pt')
-      outputs = self.tokenizer.encode(item['output'], return_tensors='pt')
-      
-      # 최대 길이를 넘어가는 경우는 제외
-      if inputs.size(1) > self.max_length:
-        return None
-      return {
-        'input_ids': inputs,
-        'labels': torch.cat(
-          [
-            torch.zeros(1, inputs.size(1) - outputs.size(1)).fill_(IGNORE_INDEX).long(),
-            outputs
-          ],
-          dim=1
-        ),
-        'attention_mask': torch.ones(inputs.size()).long()
-      }
-    except Exception as e:
-      print(f"Error tokenizing item: {e}")
-      return None
-
-
-  def _load_and_process_data(self, file_path, load_range, shuffle):
-    """데이터 로딩 및 전처리 병렬 메인"""
-    if os.path.exists(self.preprocessed_file_path):
-      print(f"🍳 Found preprocessed dataset at {self.preprocessed_file_path}. Using that...")
-    else:
-      print(f"🥚 Preprocessing dataset at {file_path}...")
-      file_streamer = codecs.open(file_path, 'r', 'utf-8')
-      with open(self.preprocessed_file_path, 'w') as f:
-        for i, line in enumerate(file_streamer.readlines()):
-          f.write(json.dumps(self._preprocess_line(line)) + '\n')
-          if i % 10000 == 0:
-            print('🥚 Preprocessing... ', i)
-      file_streamer.close()
-
-    # 전처리된 데이터 로딩 및 토큰화
-    print('ℹ️ Loading and tokenizing data...')
-    processed_data = []
-        
-    with open(self.preprocessed_file_path, 'r', encoding='utf-8') as f:
-      lines = f.readlines()
-      if load_range is not None:
-        lines = lines[load_range[0]:load_range[1]]
-
-      # 병렬 토큰화
-      print('ℹ️ Dont afraid of sequence length warning. It will be filtered by max_length.')
-      with multiprocessing.Pool(self.num_proc) as pool:
-        for item in tqdm.tqdm(
-          pool.imap(
-            self._tokenize_item,
-            (json.loads(line) for line in lines),
-            chunksize=1000
-          ),
-          total=len(lines),
-          desc="🍞 Tokenizing"
-        ):
-          if item is not None:
-            processed_data.append(item)
-
-    if shuffle:
-      random.seed(7)
-      random.shuffle(processed_data)
-
-    return processed_data
-
+  
 
 
 def custom_collate(batch):
@@ -237,7 +121,7 @@ def custom_collate(batch):
     ], dim=1))
     batch_data['attention_mask'].append(torch.cat([
       b['attention_mask'],
-      torch.zeros(1, max_len - b['attention_mask'].size(1))
+      torch.zeros(1, max_len - b['attention_mask'].size(1), dtype=torch.bool)
     ], dim=1))
 
   batch_data['input_ids'] = torch.cat(batch_data['input_ids'], dim=0)
@@ -245,6 +129,123 @@ def custom_collate(batch):
   batch_data['attention_mask'] = torch.cat(batch_data['attention_mask'], dim=0)
 
   return batch_data
+
+
+
+# class SgDataset2(torch.utils.data.Dataset):
+#   def __init__(
+#     self,
+#     file_path: str,
+#     tokenizer,
+#     max_length=1024,
+#     shuffle=False,
+#     load_range=None,
+#     num_proc=None
+#   ):
+#     self.tokenizer = tokenizer
+#     self.tokenizer_name = sg_tools.nomalize_name_or_path_to_name(tokenizer.name_or_path)
+#     self.max_length = max_length
+#     self.num_proc = num_proc or os.cpu_count()
+
+#     # 전처리 된 데이터 파일 이름
+#     ext = file_path.split('.')[-1] if '.' in file_path else ''
+#     origin_file_path_wo_ext = file_path.replace(f'.{ext}', '') if ext else file_path
+#     self.preprocessed_file_path = f"{origin_file_path_wo_ext}_name_{self.tokenizer_name}_cut_{self.max_length}.{ext}"
+
+#     self.data = self._load_and_process_data(file_path, load_range, shuffle)
+#     print(f'🍞 Total size ({file_path}): {len(self.data)}')
+
+
+#   def __len__(self):
+#     return len(self.data)
+
+
+#   def __getitem__(self, item):
+#     return self.data[item]
+
+
+#   def _preprocess_line(self, line):
+#     """단일 라인 전처리 함수"""
+#     line = eval(line)
+#     inputs = (
+#       line['buggy function before'] + '// buggy lines start:\n' +
+#       line['buggy line'] + '// buggy lines end\n' +
+#       line['buggy function after'] + '// fixed lines:\n' +
+#       line['fixed line'] + self.tokenizer.eos_token
+#     )
+#     outputs = line['fixed line'] + self.tokenizer.eos_token
+#     return {'input': inputs, 'output': outputs}
+
+
+#   def _tokenize_item(self, item):
+#     """단일 아이템 토큰화 함수"""
+#     try: 
+#       inputs = self.tokenizer.encode(item['input'], return_tensors='pt')
+#       outputs = self.tokenizer.encode(item['output'], return_tensors='pt')
+      
+#       # 최대 길이를 넘어가는 경우는 제외
+#       if inputs.size(1) > self.max_length:
+#         return None
+#       return {
+#         'input_ids': inputs,
+#         'labels': torch.cat(
+#           [
+#             torch.zeros(1, inputs.size(1) - outputs.size(1)).fill_(IGNORE_INDEX).long(),
+#             outputs
+#           ],
+#           dim=1
+#         ),
+#         'attention_mask': torch.ones(inputs.size()).long()
+#       }
+#     except Exception as e:
+#       print(f"Error tokenizing item: {e}")
+#       return None
+
+
+#   def _load_and_process_data(self, file_path, load_range, shuffle):
+#     """데이터 로딩 및 전처리 병렬 메인"""
+#     if os.path.exists(self.preprocessed_file_path):
+#       print(f"🍳 Found preprocessed dataset at {self.preprocessed_file_path}. Using that...")
+#     else:
+#       print(f"🥚 Preprocessing dataset at {file_path}...")
+#       file_streamer = codecs.open(file_path, 'r', 'utf-8')
+#       with open(self.preprocessed_file_path, 'w') as f:
+#         for i, line in enumerate(file_streamer.readlines()):
+#           f.write(json.dumps(self._preprocess_line(line)) + '\n')
+#           if i % 10000 == 0:
+#             print('🥚 Preprocessing... ', i)
+#       file_streamer.close()
+
+#     # 전처리된 데이터 로딩 및 토큰화
+#     print('ℹ️ Loading and tokenizing data...')
+#     processed_data = []
+        
+#     with open(self.preprocessed_file_path, 'r', encoding='utf-8') as f:
+#       lines = f.readlines()
+#       if load_range is not None:
+#         lines = lines[load_range[0]:load_range[1]]
+
+#       # 병렬 토큰화
+#       print('ℹ️ Dont afraid of sequence length warning. It will be filtered by max_length.')
+#       with multiprocessing.Pool(self.num_proc) as pool:
+#         for item in tqdm.tqdm(
+#           pool.imap(
+#             self._tokenize_item,
+#             (json.loads(line) for line in lines),
+#             chunksize=1000
+#           ),
+#           total=len(lines),
+#           desc="🍞 Tokenizing"
+#         ):
+#           if item is not None:
+#             processed_data.append(item)
+
+#     if shuffle:
+#       random.seed(7)
+#       random.shuffle(processed_data)
+
+#     return processed_data
+
 # ========== CLM 데이터셋 클래스 끝 ==========
 
 
