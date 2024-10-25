@@ -11,3 +11,4 @@ external/
 outputs/
 nosync/
 models/
+data/

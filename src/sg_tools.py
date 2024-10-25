@@ -188,23 +188,23 @@ def run_java_to_generate_input(
   """
   os.chdir(java_project_path)
 
-  runClass = None
+  commandArgs = [
+    'java', '-cp', '.:target:lib/*'
+  ]
   if run_type == 'finetune':
-    runClass = 'clm.finetuning.FineTuningData'
+    commandArgs.append('clm.finetuning.FineTuningData')
+    commandArgs.append('inference')
   elif run_type == 'codegen':
-    runClass = 'clm.codegen.CodeGenInputParser'
+    commandArgs.append('clm.codegen.CodeGenInputParser')
   else:
     raise ValueError('unrecognized run_type')
   
-  comandArgs = [
-    'java', '-cp', '.:target:lib/*', runClass, 'inference'
-  ]
   if run_type == 'finetune':
-    comandArgs += [buggy_file, str(rem_start), str(rem_end), tmp_file]
+    commandArgs += [buggy_file, str(rem_start), str(rem_end), tmp_file]
   elif run_type == 'codegen':
-    comandArgs += [buggy_file, str(rem_start), str(rem_end), config, tmp_file]
+    commandArgs += [buggy_file, str(rem_start), str(rem_end), config, tmp_file]
 
-  command(comandArgs)
+  command(commandArgs)
 
 
 
@@ -260,3 +260,19 @@ def ft_output_to_patch(
     end_index = output.index(eos)
   output = output[: end_index]
   return output
+
+
+
+def insert_fix(filename, start_line, end_line, patch):
+  """
+  end_row is included in the buggy lines / buggy function
+  """
+  with open(filename, 'r') as file:
+    data = file.readlines()
+
+  with open(filename, 'w') as file:
+    for i in range(start_line - 1):
+      file.write(data[i] + '\n')
+    file.write(patch.strip())
+    for i in range(end_line, len(data)):
+      file.write(data[i])
