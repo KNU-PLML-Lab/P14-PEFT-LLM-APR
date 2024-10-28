@@ -126,21 +126,28 @@ def finetune(
 
       try:
         # Mixed precision training
-        with torch.autocast("cpu", enabled=args.bf16, dtype=torch.bfloat16):
+        #with torch.autocast(device_type='cpu', dtype=torch.bfloat16): # , enabled=args.bf16
+        with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
           optimizer.zero_grad()
           output = model(
             input_ids=data['input_ids'],
             labels=data['labels'],
             attention_mask=data['attention_mask'],
             return_dict=True
-            )
+          )
           loss = output.loss
 
         # Mixed precision training 기울기 소실 방지
         scaler.scale(loss.mean()).backward()
-        # TODO: 🍞 코드 분석
+
+        # `clip_grad_value_` 의 기울기 계산을 위해 스케일링 해제
+        scaler.unscale_(optimizer)
+        # 지정된 값에서 반복 가능한 매개변수의 기울기 Clip.
         torch.nn.utils.clip_grad_value_(model.parameters(), 0.3)
+
+        # 이미 스케일링이 해제되어 있지만 infs, NaNs 이면 옵티마이저 스텝을 건너뜀
         scaler.step(optimizer)
+
         scheduler.step()
         scaler.update()
         training_loss.append(loss.mean().item())
@@ -233,7 +240,7 @@ def main():
   training_dataset = sg_dataset.SgDataset(
     file_path=args.dataset, tokenizer=tokenizer, max_length=args.max_length,
     # Debugging only
-    # load_range=[0, 1000]
+    load_range=[0, 1000]
   )
   validation_dataset = sg_dataset.SgDataset(
     file_path=args.validation_dataset, tokenizer=tokenizer, max_length=args.max_length,
