@@ -272,7 +272,7 @@ def insert_fix(filename, start_line, end_line, patch):
 
   with open(filename, 'w') as file:
     for i in range(start_line - 1):
-      file.write(data[i] + '\n')
-    file.write(patch.strip())
+      file.write(data[i])
+    file.write(patch.strip() + '\n')
     for i in range(end_line, len(data)):
       file.write(data[i])
