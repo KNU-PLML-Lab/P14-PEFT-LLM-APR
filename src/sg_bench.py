@@ -1,7 +1,7 @@
 import codecs
 import json
 import os
-import sys
+import random
 
 import numpy
 import shutil
@@ -11,6 +11,7 @@ import transformers
 import sg_args
 import sg_model
 import sg_tools
+import sg_bench_defects4j
 
 # clm의 코드 가져오기
 C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
@@ -57,78 +58,104 @@ def generate_input(
     input_dict['config'] = config
   else:
     raise ValueError(f'❌ unrecognized run_type {run_type}')
+  
+  if bench_type == 'quixbugs':
+    # INJECT: java_programs_bak 폴더가 없으면 java_programs를 복사
+    if not os.path.exists(os.path.join(bench_path, "java_programs_bak")):
+      print('📂 java_programs_bak not found. Copy java_programs to java_programs_bak. This is only one-time operation...')
+      shutil.copytree(
+        os.path.join(bench_path, "java_programs"),
+        os.path.join(bench_path, "java_programs_bak")
+      )
+    # INJECT END
 
   # 생성 루프
   for line in loc_fp.readlines():
-    filename = None
-    rem_loc = None
-    _add_loc = None
-    if bench_type == 'humaneval':
-      filename, rem_loc = line.strip().split()
-    elif bench_type == 'quixbugs':
-      filename, rem_loc, _add_loc = line.strip().split()
+    if bench_type == 'humaneval' or bench_type == 'quixbugs':
+      # humaneval or quixbugs
+      filename = None
+      rem_loc = None
+      _add_loc = None
+      if bench_type == 'humaneval':
+        filename, rem_loc = line.strip().split()
+      elif bench_type == 'quixbugs':
+        filename, rem_loc, _add_loc = line.strip().split()
+      else:
+        raise ValueError(f'❌ unrecognized bench_type {bench_type}')
+
+      start, end = rem_loc.split('-')
+      end = str(int(end) - 1) if end != start else end
+      tmp_file = os.path.join(bench_path, 'tmp.json')
+
+      # 각 벤치마크 별 파일 경로 설정
+      buggy_file = None
+      if bench_type == 'humaneval':
+        buggy_file = os.path.join(
+          bench_path,
+          'src/main/java/humaneval/buggy',
+          f'{filename}.java',
+        )
+      elif bench_type == 'quixbugs':
+        buggy_file = os.path.join(
+          bench_path,
+          'java_programs_bak',
+          f'{filename}.java'
+        )
+      else:
+        raise ValueError(f'❌ unrecognized bench_type {bench_type}')
+
+      # Jasper Java 프로젝트를 통해 입력 생성
+      sg_tools.run_java_to_generate_input(
+        run_type = run_type,
+        java_project_path = java_project_path,
+        buggy_file = buggy_file,
+        rem_start = start,
+        rem_end = end,
+        tmp_file = tmp_file,
+        config = config
+      )
+      
+      if not os.path.exists(tmp_file):
+        print(f'❌ {filename} failed. tmp file not generated')
+        continue
+
+      print(f'📜 {filename} input generated. read it...')
+      result = json.load(open(tmp_file, 'r'))
+      # result is None or empty dict throw error
+      # if not result or not result['buggy function before']:
+      if not result:
+        raise ValueError(f'❌ {filename} failed. tmp file is empty')
+      if not result['buggy function before']:
+        print(f'❌ {filename} failed. buggy function before is empty')
+        continue
+
+      if run_type == 'finetune':
+        input_dict['data'][filename] = {
+          'loc': rem_loc,
+          'input': result['buggy function before'] +
+            '// buggy lines start:\n' + result['buggy line'] +
+            '// buggy lines end:\n' + result['buggy function after'] +
+            '// fixed lines: \n',
+        }
+      elif run_type == 'codegen':
+        input_dict['data'][filename] = {
+          'loc': rem_loc,
+          'input': result['input'],
+          'function range': result['function range']
+        }
+
+      sg_tools.command(['rm', '-rf', tmp_file])
+    elif bench_type == 'defects4j':
+      d4j_res = sg_bench_defects4j.generate_defects4j_single_input(
+        bench_tmp_path = os.path.join(bench_path, 'tmp'),
+        java_project_path = java_project_path,
+        line = line
+      )
+      # d4j_res is not None and id is not None
+      if d4j_res and d4j_res['id']:
+        input_dict['data'][d4j_res['id']] = d4j_res
     else:
       raise ValueError(f'❌ unrecognized bench_type {bench_type}')
-
-    start, end = rem_loc.split('-')
-    end = str(int(end) - 1) if end != start else end
-    tmp_file = os.path.join(bench_path, 'tmp.json')
-
-    # 각 벤치마크 별 파일 경로 설정
-    buggy_file = None
-    if bench_type == 'humaneval':
-      buggy_file = os.path.join(
-        bench_path,
-        'src/main/java/humaneval/buggy',
-        f'{filename}.java',
-      )
-    elif bench_type == 'quixbugs':
-      buggy_file = os.path.join(
-        bench_path,
-        'java_programs',
-        f'{filename}.java'
-      )
-    else:
-      raise ValueError(f'❌ unrecognized bench_type {bench_type}')
-
-    # Jasper Java 프로젝트를 통해 입력 생성
-    sg_tools.run_java_to_generate_input(
-      run_type = run_type,
-      java_project_path = java_project_path,
-      buggy_file = buggy_file,
-      rem_start = start,
-      rem_end = end,
-      tmp_file = tmp_file,
-      config = config
-    )
-    
-    if not os.path.exists(tmp_file):
-      print(f'❌ {filename} failed. tmp file not generated')
-      continue
-
-    print(f'📜 {filename} input generated. read it...')
-    result = json.load(open(tmp_file, 'r'))
-    # result is None or empty dict throw error
-    # if not result or not result['buggy function before']:
-    if not result:
-      raise ValueError(f'❌ {filename} failed. tmp file is empty')
-
-    if run_type == 'finetune':
-      input_dict['data'][filename] = {
-        'loc': rem_loc,
-        'input': result['buggy function before'] +
-          '// buggy lines start:\n' + result['buggy line'] +
-          '// buggy lines end:\n' + result['buggy function after'] +
-          '// fixed lines: \n',
-      }
-    elif run_type == 'codegen':
-      input_dict['data'][filename] = {
-        'loc': rem_loc,
-        'input': result['input'],
-        'function range': result['function range']
-      }
-
-    sg_tools.command(['rm', '-rf', tmp_file])
   with open(output_file, 'w', encoding='utf-8') as f:
     json.dump(input_dict, f, indent=2)
 
@@ -170,6 +197,11 @@ def generate_output(
 
       # 모델별 토크나이징 전처리
       input_emb = tokenizer(input_text, return_tensors="pt").to('cuda')
+
+      if input_emb.input_ids.size(1) >= 1024:
+        print('🪱 too long... pass:', input_emb.input_ids.size(1))
+        continue
+
       inputs = {}
       eos_id = None
       if is_incoder:
@@ -200,7 +232,7 @@ def generate_output(
             top_p = args.top_p,
             temperature = args.temperature,
           ),
-          # use_cache=False
+          use_cache=False
         )
       except Exception as e:
         print(f'❌ {filename} generate failed. OOM counted. {str(e)}')
@@ -231,8 +263,8 @@ def generate_output(
       json.dump(input_dict, open(output_file, 'w'), indent=2)
 
       # 메모리 해제
-      # del generated_ids
-      # torch.cuda.empty_cache()
+      del generated_ids
+      torch.cuda.empty_cache()
 
   input_dict['time'] = int(numpy.sum(timings) / 1000)
   json.dump(input_dict, open(output_file, 'w'), indent=2)
@@ -537,6 +569,53 @@ def main():
         tmp_dir = QUIXBUGS_DIR
       )
       print(f"==========Output validated. Written to {validate_file}==========")
+  
+  if generation_args.do_defects4j:
+    run_type = 'finetune'
+    bench_type = 'defects4j'
+    input_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_input.json')
+    output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_output.json')
+    validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate.json')
+    random_id = random.randint(0, 9999)
+    DEFECTS4J_TMP_DIR = os.path.abspath(os.path.join(C_DIR, f'../nosync/defects4j_tmp{random_id}'))
+    DEFECTS4J_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/defects4j/defects4j_loc.txt'))
+
+    if generation_args.do_generate:
+      if not os.path.exists(input_file):
+        print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")
+        generate_input(
+          run_type = run_type,
+          bench_type = bench_type,
+          bench_path = DEFECTS4J_TMP_DIR,
+          loc_file = DEFECTS4J_LOC_FILE,
+          java_project_path = JASPER_DIR,
+          output_file = input_file
+        )
+        print(f"==========Input written to {input_file}==========")
+      
+      print(f"==========Generating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      generate_output(
+        model_name = model_name,
+        model = model,
+        tokenizer = tokenizer,
+        input_file = input_file,
+        output_file = output_file,
+        args = generation_args,
+      )
+      print(f"==========Output written to {output_file}==========")
+
+    if generation_args.do_validate:
+      print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
+      sg_bench_defects4j.validate_defects4j(
+        model_name = model_name,
+        tokenizer = tokenizer,
+        input_file = output_file,
+        output_file = validate_file,
+        tmp_dir = DEFECTS4J_TMP_DIR
+      )
+      print(f"==========Output validated. Written to {validate_file}==========")
+
+
 
 if __name__ == '__main__':
   main()
