@@ -24,6 +24,11 @@ sudo apt install openjdk-8-jdk
 # Init Defects4J
 cd defects4j
 sudo apt install cpanminus unzip build-essential
+# Local cpanm binary (https://metacpan.org/pod/App::cpanminus#Downloading-the-standalone-executable)
+#curl -L https://cpanmin.us/ -o cpanm
+#chmod +x cpanm
+# For Local
+#cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
 cpanm --installdeps .
 ./init.sh
 
@@ -36,6 +41,7 @@ export PATH=$PATH:$(pwd)/framework/bin
 # Install Perl modules
 sudo cpanm DBI
 sudo cpanm DBD::SQLite
+
 
 # Check Defects4J
 defects4j info -p Lang
