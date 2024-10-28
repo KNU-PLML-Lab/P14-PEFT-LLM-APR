@@ -55,17 +55,24 @@ def find_all_linear_names(args, model):
 
 
 def get_last_checkpoint(checkpoint_dir):
-  if os.path.isdir(checkpoint_dir):
+  PREFIX_CHECKPOINT_DIR = transformers.trainer_utils.PREFIX_CHECKPOINT_DIR
+
+  if os.path.exists(checkpoint_dir) and os.path.dirname(checkpoint_dir).startswith(PREFIX_CHECKPOINT_DIR):
+    # 현재 디렉토리가 체크포인트 디렉토리인 경우
+    return checkpoint_dir, True
+
+  elif os.path.isdir(checkpoint_dir):
     is_completed = os.path.exists(os.path.join(checkpoint_dir, 'completed'))
     # if is_completed: return None, True # already finished
     max_step = 0
     for filename in os.listdir(checkpoint_dir):
-      if os.path.isdir(os.path.join(checkpoint_dir, filename)) and filename.startswith('checkpoint'):
-        max_step = max(max_step, int(filename.replace('checkpoint-', '')))
+      if os.path.isdir(os.path.join(checkpoint_dir, filename)) and filename.startswith(PREFIX_CHECKPOINT_DIR):
+        max_step = max(max_step, int(filename.replace(f'{PREFIX_CHECKPOINT_DIR}-', '')))
     if max_step == 0: return None, is_completed # training started, but no checkpoint
-    checkpoint_dir = os.path.join(checkpoint_dir, f'checkpoint-{max_step}')
+    checkpoint_dir = os.path.join(checkpoint_dir, f'{PREFIX_CHECKPOINT_DIR}-{max_step}')
     print(f"🪙 Found a previous checkpoint at: {checkpoint_dir}")
     return checkpoint_dir, is_completed # checkpoint found!
+
   return None, False # first training
 
 

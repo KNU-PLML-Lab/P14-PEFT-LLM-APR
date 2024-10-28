@@ -153,9 +153,10 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_generate \
   --do_validate
 
+# do_defects4j 추가
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
-  --output_dir ./nosync/output/codellama_7b_v5 \
+  --output_dir ~/WorkspaceLabModels/codellama_7b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
@@ -177,7 +178,7 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
-  --output_dir ./outputs/codellama_7b_v5 \
+  --output_dir ~/WorkspaceLabModels/codellama_7b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
@@ -185,6 +186,18 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_defects4j \
   --do_validate
 
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v5 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j \
+  --do_generate \
+  --do_validate
+
+# codellama_13b_v5 집중 테스트
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
   --output_dir ~/WorkspaceLabModels/codellama_13b_v5 \
@@ -217,10 +230,72 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_defects4j \
   --do_generate \
   --do_validate
+
+
+# incoder_6b_v5 humaneval 스탭별 테스트
+CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v5/checkpoint-1000 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v5/checkpoint-2000 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v5/checkpoint-4000 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v5/checkpoint-8000 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v5/checkpoint-12000 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
 ```
 
 ### DEBUG QuixBugs
 ```bash
 javac -cp .:java_programs:junit4-4.12.jar:hamcrest-all-1.3.jar java_testcases/junit/GCD_TEST.java
 java -cp .:java_programs:junit4-4.12.jar:hamcrest-all-1.3.jar org.junit.runner.JUnitCore java_testcases.junit.GCD_TEST
+```
+
+### DEBUG defects4j
+```bash
+defects4j checkout -p Chart -v 4b -w /home/yglee/wl/p14/nosync/defects4j_tmp853/tmp
 ```
