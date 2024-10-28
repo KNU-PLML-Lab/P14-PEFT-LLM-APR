@@ -19,6 +19,7 @@ C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
 import humaneval_command
 # sys.path.append(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/'))
 import quixbugs_command
+import defects4j_command
 
 
 
@@ -59,7 +60,16 @@ def generate_input(
   else:
     raise ValueError(f'❌ unrecognized run_type {run_type}')
   
-  if bench_type == 'quixbugs':
+  if bench_type == 'humaneval':
+    # INJECTED: src_bak 폴더가 없으면 src를 복사
+    if not os.path.exists(os.path.join(bench_path, 'src_bak')):
+      print('📂 src_bak not found. Copy src to src_bak. This is only one-time operation...')
+      shutil.copytree(
+        os.path.join(bench_path, 'src'),
+        os.path.join(bench_path, 'src_bak')
+      )
+    # INJECTED END
+  elif bench_type == 'quixbugs':
     # INJECT: java_programs_bak 폴더가 없으면 java_programs를 복사
     if not os.path.exists(os.path.join(bench_path, "java_programs_bak")):
       print('📂 java_programs_bak not found. Copy java_programs to java_programs_bak. This is only one-time operation...')
@@ -92,7 +102,7 @@ def generate_input(
       if bench_type == 'humaneval':
         buggy_file = os.path.join(
           bench_path,
-          'src/main/java/humaneval/buggy',
+          'src_bak/main/java/humaneval/buggy',
           f'{filename}.java',
         )
       elif bench_type == 'quixbugs':
@@ -468,7 +478,7 @@ def main():
 
   C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
   JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/jasper/'))
-  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java/'))
+  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java3/'))
   HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/humaneval/humaneval_loc.txt'))
   QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../QuixBugs/'))
   QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/quixbugs_loc.txt'))
@@ -580,6 +590,7 @@ def main():
     DEFECTS4J_TMP_DIR = os.path.abspath(os.path.join(C_DIR, f'../nosync/defects4j_tmp{random_id}'))
     DEFECTS4J_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/defects4j/defects4j_loc.txt'))
 
+    defects4j_command.command_with_timeout(['mkdir', '-p', DEFECTS4J_TMP_DIR])
     if generation_args.do_generate:
       if not os.path.exists(input_file):
         print(f"==========Preparing input of ({bench_type}) benchmark to ({run_type}) model==========")

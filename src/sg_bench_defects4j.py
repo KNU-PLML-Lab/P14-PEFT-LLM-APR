@@ -17,6 +17,8 @@ def generate_defects4j_single_input(
   print(f'🔍 Loading line... ({line.strip()})')
   proj, bug_id, path, rem_loc, add_loc = line.strip().split()
 
+  defects4j_command.command_with_timeout(['mkdir', '-p', bench_tmp_path])
+
   # if path start with '/': remove it
   if path[0] == '/':
     path = path[1:]
