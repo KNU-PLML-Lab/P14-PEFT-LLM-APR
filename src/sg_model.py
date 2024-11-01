@@ -57,7 +57,7 @@ def find_all_linear_names(args, model):
 def get_last_checkpoint(checkpoint_dir):
   PREFIX_CHECKPOINT_DIR = transformers.trainer_utils.PREFIX_CHECKPOINT_DIR
 
-  if os.path.exists(checkpoint_dir) and os.path.dirname(checkpoint_dir).startswith(PREFIX_CHECKPOINT_DIR):
+  if os.path.exists(checkpoint_dir) and os.path.basename(checkpoint_dir).startswith(PREFIX_CHECKPOINT_DIR):
     # 현재 디렉토리가 체크포인트 디렉토리인 경우
     return checkpoint_dir, True
 
