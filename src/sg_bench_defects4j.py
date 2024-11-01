@@ -181,8 +181,7 @@ def validate_defects4j(
         # pass at least one more trigger case
         # have to pass all non-trigger
         out, err = defects4j_command.defects4j_test_suite(tmp_dir, timeout=min(300, int(2*standard_time)))
-
-        print(out, err)
+        msg_concat = str(out) + str(err)
 
         if 'TIMEOUT' in str(err) or 'TIMEOUT' in str(out):
           print(plausible, total, rank, 'Time out for patch: ', patch,
@@ -225,7 +224,163 @@ def validate_defects4j(
           correctness = 'wrong'
 
       validated_result['data'][key]['output'].append({
-        'patch': patch, 'correctness': correctness
+        'patch': patch, 'correctness': correctness,
+        'raw_output': msg_concat
+      })
+      shutil.copyfile(filename + '.bak', filename)
+
+    # write after finish validating every bug, to avoid wasting time
+    json.dump(validated_result, open(output_file, 'w'), indent=2)
+
+  # write the last time after validating all
+  json.dump(validated_result, open(output_file, 'w'), indent=2)
+
+
+
+# 원문 코드는 에러를 줄이기만 했으면 plausible로 판단
+# 이 코드는 모든 테스트를 통과해야 plausible로 판단
+def strict_validate_defects4j(
+  model_name: str,
+  tokenizer: transformers.PreTrainedTokenizer,
+  input_file: str,
+  output_file: str,
+  tmp_dir: str
+):
+  # INJECTED: debug name and EOS token
+  model_name = model_name.lower()
+
+  EOS_STR = None
+  if 'incoder' in model_name:
+    print('🧂 incoder model detected. add EOS token (<|endofmask|>)')
+    EOS_STR = '<|endofmask|>'
+  else:
+    EOS_STR = tokenizer.eos_token
+  # INJECTED END
+
+  plausible, total = 0, 0
+
+  if not os.path.exists(tmp_dir):
+    defects4j_command.command_with_timeout(['mkdir', tmp_dir])
+
+  model_output = json.load(open(input_file, 'r'))
+  validated_result = {'config': model_output['config'], 'data': {}}
+  # validated_result = json.load(open(output_file, 'r'))
+  for key in model_output['data']:
+    if key in validated_result['data']:
+      continue
+    if 'output' not in model_output['data'][key]:
+      continue
+
+    key_list = key.split('_')
+    proj, bug_id, loc = key_list[0], key_list[1], key_list[-1]
+    path = '_'.join(key_list[2: -1])
+
+    print('start validating', proj, bug_id)
+    total += 1
+    
+    validated_result['data'][key] = {}
+    for k, value in model_output['data'][key].items():
+      if k != 'output':
+        validated_result['data'][key][k] = value
+    validated_result['data'][key]['output'] = []
+    start_line, end_line = validated_result['data'][key]['loc'].split('-')
+    end_line = str(int(end_line) - 1) if end_line != start_line else end_line
+
+    defects4j_command.clean_tmp_folder(tmp_dir)
+    defects4j_command.checkout_defects4j_project(proj, bug_id + 'b', tmp_dir)
+    if proj == "Mockito":
+      print("Mockito needs separate compilation")
+      defects4j_command.compile_fix(tmp_dir)
+
+    # check standard test time
+    start_time = time.time()
+    init_out, init_err = defects4j_command.defects4j_test_suite(tmp_dir)
+    standard_time = int(time.time() - start_time)
+
+    # check failed test cases
+    failed_test_cases = str(init_out).split(' - ')[1:]
+    for i, failed_test_case in enumerate(failed_test_cases):
+      failed_test_cases[i] = failed_test_case.strip()
+    init_fail_num = len(failed_test_cases)
+    print(init_fail_num, str(standard_time) + 's')
+
+    # check triggering failed test cases
+    trigger, err = defects4j_command.defects4j_trigger(tmp_dir)
+    triggers = trigger.strip().split('\n')
+    for i, trigger in enumerate(triggers):
+      triggers[i] = trigger.strip()
+    print('trigger number:', len(triggers))
+
+    current_is_correct = False
+    for rank, patch in enumerate(model_output['data'][key]['output']):
+      filename = os.path.join(tmp_dir, path)
+      shutil.copyfile(filename, filename + '.bak')
+
+      # INJECT: 통합 patch 추출 및 insertion
+      patch = sg_tools.ft_output_to_patch(patch, EOS_STR)
+      sg_tools.insert_fix(filename, int(start_line), int(end_line), patch)
+      # INJECT END
+
+      if proj == 'Mockito':
+        # Mockito needs seperate compile
+        defects4j_command.compile_fix(tmp_dir)
+
+      # trigger cases is few and total time is long, we test trigger cases first.
+      outs = []
+      correctness = None
+      start_time = time.time()
+      if standard_time >= 10 and len(triggers) <= 5:
+        for trigger in triggers:
+          out, err = defects4j_command.defects4j_test_one(tmp_dir, trigger, timeout=min(300, int(2*standard_time)))
+          if 'TIMEOUT' in str(err) or 'TIMEOUT' in str(out):
+            print(plausible, total, rank, 'Time out for patch: ', patch,
+              str(int(time.time() - start_time)) + 's')
+            correctness = 'timeout'
+            break
+          elif 'FAIL' in str(err) or 'FAIL' in str(out):
+            print(plausible, total, rank, 'Uncompilable patch:', patch,
+              str(int(time.time() - start_time)) + 's')
+            correctness = 'uncompilable'
+            break
+          elif "Failing tests: 0" in str(out):
+            continue
+          else:
+            outs += str(out).split(' - ')[1:]
+      if len(set(outs)) >= len(triggers):
+        # does not pass any one more
+        print(plausible, total, rank, 'Wrong patch:', patch,
+          str(int(time.time() - start_time)) + 's')
+        correctness = 'wrong'
+
+      if correctness is None:
+        # pass at least one more trigger case
+        # have to pass all non-trigger
+        out, err = defects4j_command.defects4j_test_suite(tmp_dir, timeout=min(300, int(2*standard_time)))
+        msg_concat = str(out) + str(err)
+
+        if 'TIMEOUT' in str(err) or 'TIMEOUT' in str(out):
+          print(plausible, total, rank, 'Time out for patch: ', patch,
+            str(int(time.time() - start_time)) + 's')
+          correctness = 'timeout'
+        elif 'FAIL' in str(err) or 'FAIL' in str(out):
+          print(plausible, total, rank, 'Uncompilable patch:', patch,
+            str(int(time.time() - start_time)) + 's')
+          correctness = 'uncompilable'
+        elif "Failing tests: 0" in str(out):
+          if not current_is_correct:
+            current_is_correct = True
+            plausible += 1
+          print(plausible, total, rank, 'Plausible patch:', patch,
+            str(int(time.time() - start_time)) + 's')
+          correctness = 'plausible'
+        else:
+          print(plausible, total, rank, 'Wrong patch:', patch,
+            str(int(time.time() - start_time)) + 's')
+          correctness = 'wrong'
+
+      validated_result['data'][key]['output'].append({
+        'patch': patch, 'correctness': correctness,
+        'raw_output': msg_concat
       })
       shutil.copyfile(filename + '.bak', filename)
 

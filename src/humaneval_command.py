@@ -25,16 +25,17 @@ def humaneval_test_suite(algo, humaneval_dir):
     os.chdir(humaneval_dir)
     out, err = command_with_timeout(["mvn", "test", "-Dtest=TEST_" + algo.upper()], timeout=10)
     os.chdir(CUR_DIR)
-    msg = (str(out) + str(err)).upper()
+    msg_concat = str(out) + str(err)
+    msg = (msg_concat).upper()
     if "compilation problems".upper() in msg or "compilation failure".upper() in msg:
-      return 'uncompilable'
+      return ('uncompilable', msg_concat)
     elif "timeout".upper() in msg:
-      return 'timeout'
+      return ('timeout', msg_concat)
     elif "build success".upper() in msg:
-      return 'plausible'
+      return ('plausible', msg_concat)
     else:
-      return "wrong"
+      return ('wrong', msg_concat)
   except Exception as e:
     print(e)
     os.chdir(CUR_DIR)
-    return 'uncompilable'
+    return ('uncompilable', '')

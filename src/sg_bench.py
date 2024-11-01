@@ -197,7 +197,7 @@ def generate_output(
   starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
   timings = []
   oom = 0
-  memory_allocated, memory_reserved = 0, 0
+  memory_allocated, memory_reserved, memory_max = 0, 0, 0
 
   # 실행 루프
   with torch.no_grad():
@@ -222,6 +222,8 @@ def generate_output(
         inputs = input_emb.to(device)
         eos_id = tokenizer.convert_tokens_to_ids(tokenizer.eos_token)
 
+      # 기록된 최대 메모리 사용량 초기화 및 기록 시작
+      torch.cuda.reset_peak_memory_stats()
       starter.record()
       try:
         # print(input_emb.input_ids.dtype)
@@ -256,14 +258,24 @@ def generate_output(
       timings.append(curr_time)
 
       # 메모리 사용량 기록
-      total_allocated, total_reserved = 0, 0
+      total_allocated, total_reserved, total_max = 0, 0, 0
       total_allocated += torch.cuda.memory_allocated(torch.device(device)) / (1024 * 1024)
       total_reserved += torch.cuda.memory_reserved(torch.device(device)) / (1024 * 1024)
+      total_max += torch.cuda.max_memory_allocated(torch.device(device)) / (1024 * 1024)
       if total_allocated > memory_allocated:
         memory_allocated = total_allocated
       if total_reserved > memory_reserved:
         memory_reserved = total_reserved
-      print(f'(curr_time: {curr_time:.2f}, memory_allocated: {memory_allocated:.2f}MB, memory_reserved: {memory_reserved:.2f}MB, oom: {oom})')
+      if total_max > memory_max:
+        memory_max = total_max
+      print(f'(curr_time: {curr_time:.2f}, memory_allocated: {memory_allocated:.2f}MB, memory_reserved: {memory_reserved:.2f}MB, max_memory_allocated: {memory_max:.2f}MB, oom: {oom})')
+      input_dict['data'][filename]['meta'] = {
+        'time': curr_time,
+        'allocated': memory_allocated,
+        'reserved': memory_reserved,
+        'max_allocated': total_max,
+        'oom': oom
+      }
 
       # 출력 저장
       output = []
@@ -355,7 +367,7 @@ def validate_humaneval(
       sg_tools.insert_fix(filename, int(start_line), int(end_line), patch)
       # INJECT END
       
-      correctness = humaneval_command.humaneval_test_suite(proj, tmp_dir)
+      correctness, raw_output = humaneval_command.humaneval_test_suite(proj, tmp_dir)
       if correctness == 'plausible':
         if not current_is_correct:
           plausible += 1
@@ -368,7 +380,8 @@ def validate_humaneval(
       elif correctness == 'uncompilable':
         print(plausible, total, rank, "Uncompilable patch:", patch)
       validated_result['data'][proj]['output'].append({
-        'patch': patch, 'correctness': correctness
+        'patch': patch, 'correctness': correctness,
+        'raw_output': raw_output
       })
       shutil.copyfile(
         os.path.join(tmp_dir, 'src_bak/main/java/humaneval/buggy/' + proj + '.java'),
@@ -478,7 +491,7 @@ def main():
 
   C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
   JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/jasper/'))
-  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java3/'))
+  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java/'))
   HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/humaneval/humaneval_loc.txt'))
   QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../QuixBugs/'))
   QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/quixbugs_loc.txt'))
@@ -585,7 +598,6 @@ def main():
     bench_type = 'defects4j'
     input_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_input.json')
     output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_output.json')
-    validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate.json')
     random_id = random.randint(0, 9999)
     DEFECTS4J_TMP_DIR = os.path.abspath(os.path.join(C_DIR, f'../nosync/defects4j_tmp{random_id}'))
     DEFECTS4J_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/defects4j/defects4j_loc.txt'))
@@ -616,15 +628,28 @@ def main():
       print(f"==========Output written to {output_file}==========")
 
     if generation_args.do_validate:
-      print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
-      sg_bench_defects4j.validate_defects4j(
-        model_name = model_name,
-        tokenizer = tokenizer,
-        input_file = output_file,
-        output_file = validate_file,
-        tmp_dir = DEFECTS4J_TMP_DIR
-      )
-      print(f"==========Output validated. Written to {validate_file}==========")
+      if generation_args.strict_defects4j:
+        validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_strict_validate.json')
+        print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
+        sg_bench_defects4j.strict_validate_defects4j(
+          model_name = model_name,
+          tokenizer = tokenizer,
+          input_file = output_file,
+          output_file = validate_file,
+          tmp_dir = DEFECTS4J_TMP_DIR
+        )
+        print(f"==========Output validated. Written to {validate_file}==========")
+      else:
+        validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate.json')
+        print(f"==========Validating output of ({bench_type}) benchmark by ({run_type}) model==========")
+        sg_bench_defects4j.validate_defects4j(
+          model_name = model_name,
+          tokenizer = tokenizer,
+          input_file = output_file,
+          output_file = validate_file,
+          tmp_dir = DEFECTS4J_TMP_DIR
+        )
+        print(f"==========Output validated. Written to {validate_file}==========")
 
 
 

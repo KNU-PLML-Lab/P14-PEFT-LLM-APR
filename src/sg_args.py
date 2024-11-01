@@ -95,6 +95,7 @@ class GenerationArguments:
   do_humaneval: Optional[bool] = field(default=False, metadata={"help": "Whether to run the humaneval evaluation."})
   do_quixbugs: Optional[bool] = field(default=False, metadata={"help": "Whether to run the quixbugs evaluation."})
   do_defects4j: Optional[bool] = field(default=False, metadata={"help": "Whether to run the defects4j evaluation."})
+  strict_defects4j: Optional[bool] = field(default=False, metadata={"help": "Whether to run the defects4j evaluation strictly."})
 
   # Patch generation & validation
   do_generate: Optional[bool] = field(default=False, metadata={"help": "Patch code generation form benchmark data."})

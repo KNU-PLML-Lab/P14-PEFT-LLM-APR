@@ -126,8 +126,8 @@ def finetune(
 
       try:
         # Mixed precision training
-        #with torch.autocast(device_type='cpu', dtype=torch.bfloat16): # , enabled=args.bf16
-        with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
+        with torch.autocast(device_type='cpu', dtype=torch.bfloat16): # , enabled=args.bf16
+        # with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
           optimizer.zero_grad()
           output = model(
             input_ids=data['input_ids'],
