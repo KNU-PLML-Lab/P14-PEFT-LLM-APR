@@ -328,6 +328,7 @@ def strict_validate_defects4j(
       # trigger cases is few and total time is long, we test trigger cases first.
       outs = []
       correctness = None
+      msg_concat = ''
       start_time = time.time()
       if standard_time >= 10 and len(triggers) <= 5:
         for trigger in triggers:

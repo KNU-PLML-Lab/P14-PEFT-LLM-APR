@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 
+from accelerate import Accelerator
 import torch
 import tqdm
 import transformers
@@ -14,16 +15,16 @@ import sg_tools
 
 
 
-def validation_step(model, validation_loader, save_dir, device_ids_first, parallel=False, global_step=0, wandb=None):
+def validation_step(model, validation_loader, global_step=0, wandb=None):
   validation_loss = []
   model.eval()
   with torch.no_grad():
     try:
       for i, data in enumerate(validation_loader):
         data = {
-          'input_ids': data['input_ids'].to(device_ids_first),
-          'labels': data['labels'].to(device_ids_first),
-          'attention_mask': data['attention_mask'].to(device_ids_first)
+          'input_ids': data['input_ids'],
+          'labels': data['labels'],
+          'attention_mask': data['attention_mask']
         }
         output = model(input_ids=data['input_ids'], labels=data['labels'], attention_mask=data['attention_mask'], return_dict=True)
         loss = output.loss
@@ -35,7 +36,10 @@ def validation_step(model, validation_loader, save_dir, device_ids_first, parall
   if (wandb):
     wandb.log({'validation_loss': round(sum(validation_loss) / len(validation_loss), 4), 'global_step': global_step})
 
+  model.train()
 
+
+def save_checkpoint(model, save_dir, global_step, parallel=False):
   checkpoint_folder = os.path.join(
     save_dir,
     f"{transformers.trainer_utils.PREFIX_CHECKPOINT_DIR}-{global_step}"
@@ -49,10 +53,9 @@ def validation_step(model, validation_loader, save_dir, device_ids_first, parall
     model.save_pretrained(peft_model_path)
   if os.path.exists(pytorch_model_path):
     os.remove(pytorch_model_path)
-  
 
   print('📦 Checkpoint saved')
-  model.train()
+
 
 def finetune(
     args: argparse.Namespace,
@@ -64,9 +67,14 @@ def finetune(
     wandb=None,
   ):
   print('🧬 Model parameters:', sum(param.numel() for param in model.parameters()))
+
   tmp_device = model.device
+  specific_save_steps = []
+  if args.specific_save_steps:
+    specific_save_steps = [int(i) for i in args.specific_save_steps.split(',')]
+
   if not parallel:
-    model = torch.nn.DataParallel(model, device_ids=device_ids).to(tmp_device)
+    model = torch.nn.DataParallel(model, device_ids=device_ids)
   else:
     raise NotImplementedError('❌ Parallel training not implemented')
   
@@ -101,8 +109,14 @@ def finetune(
     )
   )
 
+  accelerator = Accelerator()
+  model, optimizer, scheduler, training_loader, validation_loader = accelerator.prepare(
+    model, optimizer, scheduler, training_loader, validation_loader
+  )
+
   # Mixed precision training
-  scaler = torch.GradScaler("cpu")
+  # But GradScaler is no need: https://github.com/pytorch/pytorch/issues/127176#issuecomment-2135316442
+  # scaler = torch.GradScaler("cpu")
   
   # Wandb 로깅 사용
   if (wandb):
@@ -116,9 +130,9 @@ def finetune(
 
     for i, data in enumerate(tqdm.tqdm(training_loader, desc=f'🚂 Epoch {epoch} / {args.num_train_epochs}')):
       data = {
-        'input_ids': data['input_ids'].to(tmp_device),
-        'labels': data['labels'].to(tmp_device),
-        'attention_mask': data['attention_mask'].to(tmp_device)
+        'input_ids': data['input_ids'],
+        'labels': data['labels'],
+        'attention_mask': data['attention_mask']
       }
       # print('input_ids:', data['input_ids'].dtype)
       # print('labels:', data['labels'].dtype)
@@ -126,7 +140,7 @@ def finetune(
 
       try:
         # Mixed precision training
-        with torch.autocast(device_type='cpu', dtype=torch.bfloat16): # , enabled=args.bf16
+        with torch.autocast(device_type='cpu', enabled=True): # , enabled=args.bf16
         # with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
           optimizer.zero_grad()
           output = model(
@@ -138,18 +152,19 @@ def finetune(
           loss = output.loss
 
         # Mixed precision training 기울기 소실 방지
-        scaler.scale(loss.mean()).backward()
+        # scaler.scale(loss.mean()).backward()
+        loss.mean().backward()
 
         # `clip_grad_value_` 의 기울기 계산을 위해 스케일링 해제
-        scaler.unscale_(optimizer)
+        # scaler.unscale_(optimizer)
         # 지정된 값에서 반복 가능한 매개변수의 기울기 Clip.
         torch.nn.utils.clip_grad_value_(model.parameters(), 0.3)
 
         # 이미 스케일링이 해제되어 있지만 infs, NaNs 이면 옵티마이저 스텝을 건너뜀
-        scaler.step(optimizer)
+        # scaler.step(optimizer)
 
         scheduler.step()
-        scaler.update()
+        # scaler.update()
         training_loss.append(loss.mean().item())
       except Exception as e:
         print(str(e))
@@ -186,22 +201,30 @@ def finetune(
       
       if i % args.eval_steps == 0 and i > 0:
         validation_step(
-          model,
-          validation_loader,
-          args.output_dir,
-          device_ids_first=tmp_device,
-          parallel=parallel,
+          model=model,
+          validation_loader=validation_loader,
           global_step=i,
           wandb=wandb
         )
+      if (i % args.save_steps == 0 and i > 0) or (i in specific_save_steps):
+        save_checkpoint(
+          model=model,
+          save_dir=args.output_dir,
+          global_step=i,
+          parallel=parallel,
+        )
+
     validation_step(
-      model,
-      validation_loader,
-      args.output_dir,
-      device_ids_first=tmp_device,
-      parallel=parallel,
+      model=model,
+      validation_loader=validation_loader,
       global_step=i,
       wandb=wandb
+    )
+    save_checkpoint(
+      model=model,
+      save_dir=args.output_dir,
+      global_step=i,
+      parallel=parallel,
     )
 
 
@@ -240,7 +263,7 @@ def main():
   training_dataset = sg_dataset.SgDataset(
     file_path=args.dataset, tokenizer=tokenizer, max_length=args.max_length,
     # Debugging only
-    load_range=[0, 1000]
+    # load_range=[0, 1000]
   )
   validation_dataset = sg_dataset.SgDataset(
     file_path=args.validation_dataset, tokenizer=tokenizer, max_length=args.max_length,

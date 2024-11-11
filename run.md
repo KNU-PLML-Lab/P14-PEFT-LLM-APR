@@ -121,6 +121,139 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
     --lora_dropout 0.05 \
     --report_to wandb
 ```
+## bf16 seed72
+
+### codegen_6b_v7 (4090)
+```bash
+CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
+    --run_name codegen_6b_v7 \
+    --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+    --output_dir ~/WorkspaceLabModels/codegen_6b_v7 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.0002 \
+    --seed 72 \
+    --max_length 768 \
+    --per_device_train_batch_size 8 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 1000 \
+    --save_steps 1000 \
+    --specific_save_steps "13,125,1250,6250" \
+    --eval_dataset_size 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --report_to wandb
+```
+
+### incoder_6b_v7 (4090)
+```bash
+CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
+    --run_name incoder_6b_v7 \
+    --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
+    --output_dir ~/WorkspaceLabModels/incoder_6b_v7 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.0002 \
+    --seed 72 \
+    --max_length 1024 \
+    --per_device_train_batch_size 8 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 1000 \
+    --save_steps 1000 \
+    --specific_save_steps "13,125,1250,6250" \
+    --eval_dataset_size 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --report_to wandb
+```
+
+### codellama_7b_v7 (4090)
+```bash
+CUDA_VISIBLE_DEVICES="2" python ./src/sg_finetune.py \
+    --run_name codellama_7b_v7 \
+    --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
+    --output_dir ~/WorkspaceLabModels/codellama_7b_v7 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.0002 \
+    --seed 72 \
+    --max_length 1024 \
+    --per_device_train_batch_size 8 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 1000 \
+    --save_steps 1000 \
+    --specific_save_steps "13,125,1250,6250" \
+    --eval_dataset_size 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --report_to wandb
+```
+
+### codellama_13b_v7 (A6000)
+```bash
+CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
+    --run_name codellama_13b_v7 \
+    --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+    --output_dir ~/WorkspaceLabModels/codellama_13b_v7 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.0002 \
+    --seed 72 \
+    --max_length 1024 \
+    --per_device_train_batch_size 8 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 1000 \
+    --save_steps 1000 \
+    --specific_save_steps "13,125,1250,6250" \
+    --eval_dataset_size 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --report_to wandb
+```
+
+### codellama_34b_v7 (A6000)
+```bash
+CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
+    --run_name codellama_34b_v7 \
+    --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+    --output_dir ~/WorkspaceLabModels/codellama_34b_v7 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.0001 \
+    --seed 0 \
+    --max_length 1024 \
+    --per_device_train_batch_size 4 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 2000 \
+    --save_steps 2000 \
+    --specific_save_steps "25,250,2500,12500" \
+    --eval_dataset_size 1000 \
+    --max_eval_samples 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --lora_dropout 0.05 \
+    --report_to wandb
+```
 
 ## Benchmarks
 ```bash
@@ -131,7 +264,7 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
 # --do_generate
 # --do_validate
 
-CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
   --output_dir ~/WorkspaceLabModels/codegen_6b_v5 \
   --do_sample \
@@ -150,19 +283,30 @@ CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval \
-  --do_generate \
+  --do_defects4j \
+  --strict_defects4j \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
-  --output_dir ~/WorkspaceLabModels/codellama_7b_v5 \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v5 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval \
-  --do_generate \
+  --do_defects4j \
+  --strict_defects4j \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v5 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j \
+  --strict_defects4j \
   --do_validate
 
 # do_defects4j 추가

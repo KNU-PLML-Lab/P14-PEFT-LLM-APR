@@ -79,6 +79,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
   # Save
   save_strategy: str = field(default='steps', metadata={"help": 'When to save checkpoints'})
   save_steps: int = field(default=500, metadata={"help": 'How often to save a model'})
+  specific_save_steps: Optional[str] = field(default=None, metadata={"help": 'Save model at specific steps separated by comma'})
   save_total_limit: int = field(default=20, metadata={"help": 'How many checkpoints to save before the oldest is overwritten'})
   # mmlu_split: Optional[str] = field(default='eval', metadata={"help": "The MMLU split to run on"})
   # mmlu_dataset: Optional[str] = field(default='mmlu-fs', metadata={"help": "MMLU dataset to use: options are `mmlu-zs` for zero-shot or `mmlu-fs` for few shot."})
