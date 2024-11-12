@@ -509,6 +509,18 @@ def main():
 
   # Humaneval 테스트
   if generation_args.do_humaneval:
+    # Copy bench dir
+    NEW_HUMANEVAL_DIR = os.path.abspath(
+      os.path.join(
+        os.path.dirname(HUMANEVAL_DIR),
+        os.path.basename(HUMANEVAL_DIR) + str(random.randint(0, 9999))
+      )
+    )
+    shutil.copytree(
+      HUMANEVAL_DIR,
+      NEW_HUMANEVAL_DIR
+    )
+    HUMANEVAL_DIR = NEW_HUMANEVAL_DIR
 
     run_type = 'finetune'
     bench_type = 'humaneval'
@@ -550,6 +562,9 @@ def main():
         tmp_dir = HUMANEVAL_DIR
       )
       print(f"==========Output validated. Written to {validate_file}==========")
+
+    # Remove bench dir
+    shutil.rmtree(HUMANEVAL_DIR)
 
   if generation_args.do_quixbugs:
     run_type = 'finetune'
