@@ -3,9 +3,12 @@ import importlib
 import json
 import os
 import packaging
+import random
 import subprocess
 import warnings
 
+import numpy
+import torch
 import transformers
 
 
@@ -276,3 +279,29 @@ def insert_fix(filename, start_line, end_line, patch):
     file.write(patch.strip() + '\n')
     for i in range(end_line, len(data)):
       file.write(data[i])
+
+
+
+def set_seed(seed: int, deterministic: bool = False):
+  """
+  Helper function for reproducible behavior to set the seed in `random`, `numpy`, `torch` and/or `tf` (if installed).
+
+  Args:
+      seed (`int`):
+          The seed to set.
+      deterministic (`bool`, *optional*, defaults to `False`):
+          Whether to use deterministic algorithms where available. Can slow down training.
+  """
+  random.seed(seed)
+  numpy.random.seed(seed)
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed_all(seed)
+  # ^^ safe to call this function even if cuda is not available
+  if deterministic:
+    torch.use_deterministic_algorithms(True)
+  # if is_torch_mlu_available():
+  #   torch.mlu.manual_seed_all(seed)
+  # if is_torch_npu_available():
+  #   torch.npu.manual_seed_all(seed)
+  # if is_torch_xpu_available():
+  #   torch.xpu.manual_seed_all(seed)

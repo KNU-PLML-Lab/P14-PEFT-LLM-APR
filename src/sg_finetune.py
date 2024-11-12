@@ -274,6 +274,10 @@ def main():
   sg_tools.print_trainable_parameters(args, model)
   sg_tools.print_model_named_parameters(model)
 
+  if args.seed:
+    print(f'🌱 Set seed: {args.seed}')
+    sg_tools.set_seed(seed=args.seed)
+
   finetune(
     args=args,
     model=model,

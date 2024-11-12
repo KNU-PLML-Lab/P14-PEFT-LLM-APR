@@ -238,7 +238,7 @@ CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
     --do_train \
     --do_eval \
     --learning_rate 0.0001 \
-    --seed 0 \
+    --seed 72 \
     --max_length 1024 \
     --per_device_train_batch_size 4 \
     --gradient_checkpointing \
@@ -259,32 +259,43 @@ CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
 ```bash
 # --do_humaneval
 # --do_quixbugs
-# --do_defects4j
+# --do_defects4j --strict_defects4j
 
 # --do_generate
 # --do_validate
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
-  --output_dir ~/WorkspaceLabModels/codegen_6b_v5 \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v7 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 64 \
-  --do_defects4j \
-  --strict_defects4j \
+  --do_humaneval \
+  --do_generate \
   --do_validate
   
 
-CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
-  --output_dir ~/WorkspaceLabModels/incoder_6b_v5 \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v7 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_defects4j \
-  --strict_defects4j \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
+  --output_dir ~/WorkspaceLabModels/codellama_7b_v7 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \

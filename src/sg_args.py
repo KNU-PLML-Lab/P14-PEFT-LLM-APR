@@ -41,6 +41,7 @@ class TrainingArguments(transformers.Seq2SeqTrainingArguments):
   lr_scheduler_type: str = field(default='constant', metadata={"help": 'Learning rate schedule. Constant a bit better than cosine, and has advantage for analysis'})
   max_grad_norm: float = field(default=0.3, metadata={"help": 'Gradient clipping max norm. This is tuned and works well for all models tested.'})
   warmup_ratio: float = field(default=0.03, metadata={"help": 'Fraction of steps to do a warmup for'})
+  seed: int = field(default=42, metadata={"help": 'Random seed'})
   
   # QLoRA
   full_finetune: bool = field(default=False, metadata={"help": "Finetune the entire model without adapters."})
