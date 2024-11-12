@@ -49,7 +49,11 @@ def nomalize_name_or_path_to_name(name_or_path: str):
 
 
 
-def save_model_struct(model, path=None, model_name: str = None):
+def save_model_struct(
+  model,
+  path=None,
+  model_name: str = None
+):
   """
     디버깅을 위해 모델의 구조를 파일로 저장합니다.
   """

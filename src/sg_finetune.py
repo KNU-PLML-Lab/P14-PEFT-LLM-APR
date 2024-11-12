@@ -252,9 +252,10 @@ def main():
   model, tokenizer = sg_model.get_model_tokenizer(args, force_model)
   
   # 모델 구조 디버깅
+  os.makedirs(args.output_dir, exist_ok=True)
   sg_tools.save_model_struct(
-    model,
-    model_name=sg_tools.nomalize_name_or_path_to_name(args.model_name_or_path) if args.model_name_or_path else None,
+    model=model,
+    path=os.path.abspath(os.path.join(args.output_dir, 'model_struct.txt')),
   )
   # return exit(0)
 
