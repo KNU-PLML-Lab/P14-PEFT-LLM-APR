@@ -141,7 +141,6 @@ def finetune(
       try:
         # Mixed precision training
         with torch.autocast(device_type='cpu', enabled=True): # , enabled=args.bf16
-        # with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
           optimizer.zero_grad()
           output = model(
             input_ids=data['input_ids'],
@@ -162,6 +161,7 @@ def finetune(
 
         # 이미 스케일링이 해제되어 있지만 infs, NaNs 이면 옵티마이저 스텝을 건너뜀
         # scaler.step(optimizer)
+        optimizer.step()
 
         scheduler.step()
         # scaler.update()

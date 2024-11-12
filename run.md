@@ -123,12 +123,12 @@ CUDA_VISIBLE_DEVICES="1" python sg_finetune.py \
 ```
 ## bf16 seed72
 
-### codegen_6b_v7 (4090)
+### codegen_6b_v8 (4090)
 ```bash
 CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
-    --run_name codegen_6b_v7 \
+    --run_name codegen_6b_v8 \
     --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
-    --output_dir ~/WorkspaceLabModels/codegen_6b_v7 \
+    --output_dir ~/WorkspaceLabModels/codegen_6b_v8 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
@@ -149,12 +149,12 @@ CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
     --report_to wandb
 ```
 
-### incoder_6b_v7 (4090)
+### incoder_6b_v8 (4090)
 ```bash
 CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
-    --run_name incoder_6b_v7 \
+    --run_name incoder_6b_v8 \
     --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
-    --output_dir ~/WorkspaceLabModels/incoder_6b_v7 \
+    --output_dir ~/WorkspaceLabModels/incoder_6b_v8 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
@@ -175,12 +175,12 @@ CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
     --report_to wandb
 ```
 
-### codellama_7b_v7 (4090)
+### codellama_7b_v8 (4090)
 ```bash
 CUDA_VISIBLE_DEVICES="2" python ./src/sg_finetune.py \
-    --run_name codellama_7b_v7 \
+    --run_name codellama_7b_v8 \
     --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
-    --output_dir ~/WorkspaceLabModels/codellama_7b_v7 \
+    --output_dir ~/WorkspaceLabModels/codellama_7b_v8 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
@@ -201,12 +201,12 @@ CUDA_VISIBLE_DEVICES="2" python ./src/sg_finetune.py \
     --report_to wandb
 ```
 
-### codellama_13b_v7 (A6000)
+### codellama_13b_v8 (A6000)
 ```bash
 CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
-    --run_name codellama_13b_v7 \
+    --run_name codellama_13b_v8 \
     --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
-    --output_dir ~/WorkspaceLabModels/codellama_13b_v7 \
+    --output_dir ~/WorkspaceLabModels/codellama_13b_v8 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
@@ -227,12 +227,12 @@ CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
     --report_to wandb
 ```
 
-### codellama_34b_v7 (A6000)
+### codellama_34b_v8 (A6000)
 ```bash
 CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
-    --run_name codellama_34b_v7 \
+    --run_name codellama_34b_v8 \
     --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-    --output_dir ~/WorkspaceLabModels/codellama_34b_v7 \
+    --output_dir ~/WorkspaceLabModels/codellama_34b_v8 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
