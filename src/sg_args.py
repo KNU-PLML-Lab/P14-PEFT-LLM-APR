@@ -98,6 +98,7 @@ class GenerationArguments:
   do_quixbugs: Optional[bool] = field(default=False, metadata={"help": "Whether to run the quixbugs evaluation."})
   do_defects4j: Optional[bool] = field(default=False, metadata={"help": "Whether to run the defects4j evaluation."})
   strict_defects4j: Optional[bool] = field(default=False, metadata={"help": "Whether to run the defects4j evaluation strictly."})
+  validate_result_split_defects4j: Optional[bool] = field(default=False, metadata={"help": "Whether to split the results for defects4j v1.2 and v2.0."})
 
   # Patch generation & validation
   do_generate: Optional[bool] = field(default=False, metadata={"help": "Patch code generation form benchmark data."})

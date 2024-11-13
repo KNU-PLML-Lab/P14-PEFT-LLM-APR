@@ -259,10 +259,20 @@ CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
 ```bash
 # --do_humaneval
 # --do_quixbugs
-# --do_defects4j --strict_defects4j
+# --do_defects4j --strict_defects4j --validate_result_split_defects4j
 
 # --do_generate
 # --do_validate
+
+# tmp
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v5 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
@@ -274,7 +284,6 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_defects4j --strict_defects4j \
   --do_generate \
   --do_validate
-  
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder_6b \

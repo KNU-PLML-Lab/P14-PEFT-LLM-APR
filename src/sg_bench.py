@@ -506,8 +506,18 @@ def main():
   if ('code_llama' in args.model_name_or_path.lower()) or ('codellama' in args.model_name_or_path.lower()):
     force_model = 'code_llama'
   model, tokenizer = sg_model.get_model_tokenizer(args, force_model)
-  model.config.use_cache = False
-  model.eval()
+
+  # 생성 작업이 아니면 로드 이후 Model free
+  if not generation_args.do_generate:
+    model.cpu()
+    del model
+    torch.cuda.empty_cache()  # GPU 메모리 정리
+    import gc
+    gc.collect()  # 가비지 컬렉션 실행
+    model = None
+  else:
+    model.config.use_cache = False
+    model.eval()
 
   model_name = sg_tools.nomalize_name_or_path_to_name(args.model_name_or_path) if args.model_name_or_path else 'UnknownModel'
 
@@ -693,6 +703,28 @@ def main():
           tmp_dir = DEFECTS4J_TMP_DIR
         )
         print(f"==========Output validated. Written to {validate_file}==========")
+    if generation_args.validate_result_split_defects4j:
+      if generation_args.strict_defects4j:
+        print(f'==========Splitting defects4j strict result==========')
+        validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_strict_validate.json')
+        v12_output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_strict_validate_v12.json')
+        v20_output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_strict_validate_v20.json')
+        sg_bench_defects4j.result_v12_v20_splitter(
+          input_file = validate_file,
+          v12_output_file = v12_output_file,
+          v20_output_file = v20_output_file
+        )
+      else:
+        print(f'==========Splitting defects4j result==========')
+        validate_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate.json')
+        v12_output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate_v12.json')
+        v20_output_file = os.path.join(os.path.abspath(args.output_dir), 'defects4j_finetune_validate_v20.json')
+        sg_bench_defects4j.result_v12_v20_splitter(
+          input_file = validate_file,
+          v12_output_file = v12_output_file,
+          v20_output_file = v20_output_file
+        )
+      print(f'==========Splitting done. Written to {v12_output_file}, {v20_output_file}==========')
 
 
 

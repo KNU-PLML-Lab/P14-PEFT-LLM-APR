@@ -406,3 +406,59 @@ def strict_validate_defects4j(
     'total': total
   }
   json.dump(validated_result, open(output_file, 'w'), indent=2)
+
+
+def result_v12_v20_splitter(
+  input_file: str,
+  v12_output_file: str,
+  v20_output_file: str
+):
+  V12_DATA_WITH_MAX_INDEX = {
+    'Chart': 26,
+    'Closure': 133,
+    'Lang': 65,
+    'Math': 106,
+    'Mockito': 38,
+    'Time': 27
+  }
+
+  input_data = json.load(open(input_file, 'r'))
+  v12_output_data = {'config': input_data['config'], 'data': {}, 'result': {
+    'plausible': 0,
+    'total': 0
+  }}
+  v20_output_data = {'config': input_data['config'], 'data': {}, 'result': {
+    'plausible': 0,
+    'total': 0
+  }}
+
+  for key in input_data['data']:
+    key_list = key.split('_')
+    if len(key_list) < 2:
+      print(f'💥 Unexpected defects4j validation key: {key}')
+      exit(1)
+
+    proj = key_list[0]
+    v12_proj_max_index = V12_DATA_WITH_MAX_INDEX.get(proj)
+    target_data = input_data['data'][key]
+
+    is_plausible = False
+    for patch in target_data['output']:
+      if patch['correctness'] == 'plausible':
+        is_plausible = True
+        break
+
+
+    if (v12_proj_max_index is not None) and int(key_list[1]) <= v12_proj_max_index:
+      v12_output_data['data'][key] = input_data['data'][key]
+      v12_output_data['result']['total'] += 1
+      if is_plausible:
+        v12_output_data['result']['plausible'] += 1
+    else:
+      v20_output_data['data'][key] = input_data['data'][key]
+      v20_output_data['result']['total'] += 1
+      if is_plausible:
+        v20_output_data['result']['plausible'] += 1
+
+  json.dump(v12_output_data, open(v12_output_file, 'w'), indent=2)
+  json.dump(v20_output_data, open(v20_output_file, 'w'), indent=2)
