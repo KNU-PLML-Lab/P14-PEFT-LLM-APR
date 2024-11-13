@@ -152,9 +152,9 @@ CUDA_VISIBLE_DEVICES="0" python ./src/sg_finetune.py \
 ### incoder_6b_v8 (4090)
 ```bash
 CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
-    --run_name incoder_6b_v8 \
+    --run_name incoder_6b_v8_2 \
     --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
-    --output_dir ~/WorkspaceLabModels/incoder_6b_v8 \
+    --output_dir ~/WorkspaceLabModels/incoder_6b_v8_2 \
     --dataset ./data/finetune_training.jsonl \
     --validation_dataset ./data/finetune_validation.jsonl \
     --do_train \
@@ -266,35 +266,35 @@ CUDA_VISIBLE_DEVICES="1" python ./src/sg_finetune.py \
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
-  --output_dir ~/WorkspaceLabModels/codegen_6b_v7 \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v8 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 64 \
-  --do_humaneval \
+  --do_defects4j --strict_defects4j \
   --do_generate \
   --do_validate
   
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/incoder_6b \
-  --output_dir ~/WorkspaceLabModels/incoder_6b_v7 \
+  --output_dir ~/WorkspaceLabModels/incoder_6b_v8_2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval \
+  --do_defects4j --strict_defects4j \
   --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_7b \
-  --output_dir ~/WorkspaceLabModels/codellama_7b_v7 \
+  --output_dir ~/WorkspaceLabModels/codellama_7b_v8 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
-  --do_humaneval \
+  --do_defects4j --strict_defects4j \
   --do_generate \
   --do_validate
 

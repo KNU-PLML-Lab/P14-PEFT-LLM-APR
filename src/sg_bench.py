@@ -387,6 +387,10 @@ def validate_humaneval(
         os.path.join(tmp_dir, 'src_bak/main/java/humaneval/buggy/' + proj + '.java'),
         os.path.join(tmp_dir, 'src/main/java/humaneval/buggy/' + proj + '.java')
       )
+    validated_result['result'] = {
+      'plausible': plausible,
+      'total': total
+    }
     json.dump(validated_result, open(output_file, 'w'), indent=2)
 
 
@@ -475,6 +479,10 @@ def validate_quixbugs(
         tmp_dir + "/java_programs_bak/" + proj + '.java',
         tmp_dir + "/java_programs/" + proj + '.java'
       )
+    validated_result['result'] = {
+      'plausible': plausible,
+      'total': total
+    }
     json.dump(validated_result, open(output_file, 'w'), indent=2)
 
 
@@ -491,10 +499,6 @@ def main():
 
   C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
   JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/jasper/'))
-  HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java/'))
-  HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/humaneval/humaneval_loc.txt'))
-  QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../QuixBugs/'))
-  QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/quixbugs_loc.txt'))
   # DEFAULT_PAD_TOKEN = "[PAD]"
 
   # AutoTokenizer가 CodeLlamaTokenizer를 인식하지 못함
@@ -509,6 +513,8 @@ def main():
 
   # Humaneval 테스트
   if generation_args.do_humaneval:
+    HUMANEVAL_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/humaneval-java/'))
+    HUMANEVAL_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/humaneval/humaneval_loc.txt'))
     # Copy bench dir
     NEW_HUMANEVAL_DIR = os.path.abspath(
       os.path.join(
@@ -516,6 +522,7 @@ def main():
         os.path.basename(HUMANEVAL_DIR) + str(random.randint(0, 9999))
       )
     )
+    print(f'🧫 Copy humaneval dir from {HUMANEVAL_DIR} to {NEW_HUMANEVAL_DIR}')
     shutil.copytree(
       HUMANEVAL_DIR,
       NEW_HUMANEVAL_DIR
@@ -566,7 +573,24 @@ def main():
     # Remove bench dir
     shutil.rmtree(HUMANEVAL_DIR)
 
+
   if generation_args.do_quixbugs:
+    QUIXBUGS_DIR = os.path.abspath(os.path.join(C_DIR, '../QuixBugs/'))
+    QUIXBUGS_LOC_FILE = os.path.abspath(os.path.join(C_DIR, '../clm/clm-apr/quixbugs/quixbugs_loc.txt'))
+    # Copy bench dir
+    NEW_QUIXBUGS_DIR = os.path.abspath(
+      os.path.join(
+        os.path.dirname(QUIXBUGS_DIR),
+        os.path.basename(QUIXBUGS_DIR) + str(random.randint(0, 9999))
+      )
+    )
+    print(f'🧫 Copy quixbugs dir from {QUIXBUGS_DIR} to {NEW_QUIXBUGS_DIR}')
+    shutil.copytree(
+      QUIXBUGS_DIR,
+      NEW_QUIXBUGS_DIR
+    )
+    QUIXBUGS_DIR = NEW_QUIXBUGS_DIR
+
     run_type = 'finetune'
     bench_type = 'quixbugs'
     input_file = os.path.join(os.path.abspath(args.output_dir), 'quixbugs_finetune_input.json')
@@ -607,7 +631,11 @@ def main():
         tmp_dir = QUIXBUGS_DIR
       )
       print(f"==========Output validated. Written to {validate_file}==========")
-  
+
+    # Remove bench dir
+    shutil.rmtree(QUIXBUGS_DIR)
+
+
   if generation_args.do_defects4j:
     run_type = 'finetune'
     bench_type = 'defects4j'

@@ -230,9 +230,17 @@ def validate_defects4j(
       shutil.copyfile(filename + '.bak', filename)
 
     # write after finish validating every bug, to avoid wasting time
+    validated_result['result'] = {
+      'plausible': plausible,
+      'total': total
+    }
     json.dump(validated_result, open(output_file, 'w'), indent=2)
 
   # write the last time after validating all
+  validated_result['result'] = {
+    'plausible': plausible,
+    'total': total
+  }
   json.dump(validated_result, open(output_file, 'w'), indent=2)
 
 
@@ -386,7 +394,15 @@ def strict_validate_defects4j(
       shutil.copyfile(filename + '.bak', filename)
 
     # write after finish validating every bug, to avoid wasting time
+    validated_result['result'] = {
+      'plausible': plausible,
+      'total': total
+    }
     json.dump(validated_result, open(output_file, 'w'), indent=2)
 
   # write the last time after validating all
+  validated_result['result'] = {
+    'plausible': plausible,
+    'total': total
+  }
   json.dump(validated_result, open(output_file, 'w'), indent=2)
