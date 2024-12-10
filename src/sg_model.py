@@ -9,6 +9,9 @@ import torch
 import transformers
 import peft
 
+import sg_tools
+
+
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 
@@ -54,28 +57,6 @@ def find_all_linear_names(args, model):
   return list(lora_module_names)
 
 
-def get_last_checkpoint(checkpoint_dir):
-  PREFIX_CHECKPOINT_DIR = transformers.trainer_utils.PREFIX_CHECKPOINT_DIR
-
-  if os.path.exists(checkpoint_dir) and os.path.basename(checkpoint_dir).startswith(PREFIX_CHECKPOINT_DIR):
-    # 현재 디렉토리가 체크포인트 디렉토리인 경우
-    return checkpoint_dir, True
-
-  elif os.path.isdir(checkpoint_dir):
-    is_completed = os.path.exists(os.path.join(checkpoint_dir, 'completed'))
-    # if is_completed: return None, True # already finished
-    max_step = 0
-    for filename in os.listdir(checkpoint_dir):
-      if os.path.isdir(os.path.join(checkpoint_dir, filename)) and filename.startswith(PREFIX_CHECKPOINT_DIR):
-        max_step = max(max_step, int(filename.replace(f'{PREFIX_CHECKPOINT_DIR}-', '')))
-    if max_step == 0: return None, is_completed # training started, but no checkpoint
-    checkpoint_dir = os.path.join(checkpoint_dir, f'{PREFIX_CHECKPOINT_DIR}-{max_step}')
-    print(f"🪙 Found a previous checkpoint at: {checkpoint_dir}")
-    return checkpoint_dir, is_completed # checkpoint found!
-
-  return None, False # first training
-
-
 def __smart_tokenizer_and_embedding_resize(
     special_tokens_dict: Dict,
     tokenizer: transformers.PreTrainedTokenizer,
@@ -104,7 +85,7 @@ def get_model_tokenizer(
   force_model: str, # 'code_llama'
 ) -> tuple[(peft.PeftModel | peft.PeftMixedModel), transformers.PreTrainedTokenizer]:
   # 마지막 세팅 불러오기
-  checkpoint_dir, completed_training = get_last_checkpoint(args.output_dir)
+  checkpoint_dir, completed_training = sg_tools.get_last_checkpoint(args.output_dir)
   if completed_training:
     print('Detected that training was already completed!')
   if checkpoint_dir is not None:
@@ -137,25 +118,37 @@ def get_model_tokenizer(
   print(f'🛤️ Loading base model {args.model_name_or_path}...')
   compute_dtype = (torch.float16 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32))
   # compute_dtype = torch.bfloat16
-  model = transformers.AutoModelForCausalLM.from_pretrained(
-    args.model_name_or_path,
-    cache_dir=args.cache_dir,
-    device_map=device_map,
-    max_memory=max_memory,
-    quantization_config=transformers.BitsAndBytesConfig(
-      load_in_4bit=args.bits == 4, # 4bit 양자화 시 
-      load_in_8bit=args.bits == 8, # 8bit 양자화 시
-      llm_int8_threshold=6.0, 
-      llm_int8_has_fp16_weight=False,
-      bnb_4bit_compute_dtype=compute_dtype, # 정규 분포에서 초기화된 가중치에 특별한 4비트 데이터 유형을 사용
-      bnb_4bit_use_double_quant=args.double_quant, # 이미 양자화된 가중치를 양자화하기 위해 중첩된 양자화 방식을 사용
-      bnb_4bit_quant_type=args.quant_type, # 더 빠른 계산을 위해 bfloat16 사용
-    ),
-    torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
-    # torch_dtype=torch.bfloat16,
-    trust_remote_code=args.trust_remote_code,
-    token=args.token
-  )
+  model = None
+  if args.full_finetune:
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+      args.model_name_or_path,
+      cache_dir=args.cache_dir,
+      device_map=device_map,
+      max_memory=max_memory,
+      torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
+      trust_remote_code=args.trust_remote_code,
+      token=args.token
+    )
+  else:
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+      args.model_name_or_path,
+      cache_dir=args.cache_dir,
+      device_map=device_map,
+      max_memory=max_memory,
+      quantization_config=transformers.BitsAndBytesConfig(
+        load_in_4bit=args.bits == 4, # 4bit 양자화 시 
+        load_in_8bit=args.bits == 8, # 8bit 양자화 시
+        llm_int8_threshold=6.0, 
+        llm_int8_has_fp16_weight=False,
+        bnb_4bit_compute_dtype=compute_dtype, # 정규 분포에서 초기화된 가중치에 특별한 4비트 데이터 유형을 사용
+        bnb_4bit_use_double_quant=args.double_quant, # 이미 양자화된 가중치를 양자화하기 위해 중첩된 양자화 방식을 사용
+        bnb_4bit_quant_type=args.quant_type, # 더 빠른 계산을 위해 bfloat16 사용
+      ),
+      torch_dtype=(torch.float32 if args.fp16 else (torch.bfloat16 if args.bf16 else torch.float32)),
+      # torch_dtype=torch.bfloat16,
+      trust_remote_code=args.trust_remote_code,
+      token=args.token
+    )
   if compute_dtype == torch.float16 and args.bits == 4:
     if torch.cuda.is_bf16_supported():
       print('='*80)
