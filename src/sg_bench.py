@@ -499,6 +499,7 @@ def main():
 
   C_DIR = os.path.abspath(__file__)[: os.path.abspath(__file__).rindex('/') + 1]
   JASPER_DIR = os.path.abspath(os.path.join(C_DIR, '../clm/jasper/'))
+  NOSYNC_DIR = os.path.abspath(os.path.join(C_DIR, '../nosync/'))
   # DEFAULT_PAD_TOKEN = "[PAD]"
 
   # AutoTokenizer가 CodeLlamaTokenizer를 인식하지 못함
@@ -528,7 +529,7 @@ def main():
     # Copy bench dir
     NEW_HUMANEVAL_DIR = os.path.abspath(
       os.path.join(
-        os.path.dirname(HUMANEVAL_DIR),
+        NOSYNC_DIR,
         os.path.basename(HUMANEVAL_DIR) + str(random.randint(0, 9999))
       )
     )
@@ -590,7 +591,7 @@ def main():
     # Copy bench dir
     NEW_QUIXBUGS_DIR = os.path.abspath(
       os.path.join(
-        os.path.dirname(QUIXBUGS_DIR),
+        NOSYNC_DIR,
         os.path.basename(QUIXBUGS_DIR) + str(random.randint(0, 9999))
       )
     )
