@@ -1,0 +1,20 @@
+public static boolean has_close_elements(List<Double> numbers, double threshold){
+  for (int i = 0; i < numbers.size(); i += 1){
+    for (int j = i + 1; j < numbers.size(); j += 1){
+// buggy lines start:
+      double distance = numbers.get(i) - numbers.get(j);
+// buggy lines end:
+      if (distance < threshold)
+        return true;
+    }
+  }
+  return false;
+}
+// fixed lines: 
+✅    double distance = Math.abs(numbers.get(i) - numbers.get(j));
+❌    double distance = numbers.get(i) - numbers.get(j);
+❌    double distance = numbers.get(i).doubleValue() - numbers.get(j).doubleValue();
+❌    double distance = numbers.get(j) - numbers.get(i);
+❌    double distance = numbers.get(i) - numbers.get(j) + 1
+❌    double distance = numbers.get(i) - numbers.get(j) - 1;
+...
