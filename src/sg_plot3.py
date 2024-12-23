@@ -3,6 +3,7 @@ import os
 
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy
 import seaborn
 import pandas
@@ -199,7 +200,7 @@ def plt_rq3_gpu(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -281,7 +282,7 @@ def plt_rq3_time(
   )
 
   # 범례
-  ax.get_legend().set_title(None)
+  ax.get_legend().set_title('')
   # ax.get_legend().remove()
 
   # 그래프 스타일 설정
@@ -293,7 +294,7 @@ def plt_rq3_time(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -21,13 +22,13 @@ VAL_D4JS20 = 'defects4j_finetune_strict_validate_v20.json'
 class ValidationSummary:
   def __init__(
     self,
-    model_nickname: str = None, # ex. 'CodeLLaMa 13B'
-    model_list_dirpath: str = None, # ex. 'models/'
-    model_dirname: str = None, # ex. 'codellama_13b_v8'
-    checkpoint_num: int = None, # ex. 1000
-    validation_json: str = None, # ex. 'humaneval_finetune_validate.json'
+    model_nickname: Optional[str] = None, # ex. 'CodeLLaMa 13B'
+    model_list_dirpath: Optional[str] = None, # ex. 'models/'
+    model_dirname: Optional[str] = None, # ex. 'codellama_13b_v8'
+    checkpoint_num: Optional[int] = None, # ex. 1000
+    validation_json: Optional[str] = None, # ex. 'humaneval_finetune_validate.json'
 
-    force_json_path: str = None
+    force_json_path: Optional[str] = None
   ):
     self.json_path = ''
     self.model_name = ''
@@ -52,9 +53,9 @@ class ValidationSummary:
       self.json_path = force_json_path
     else:
       if checkpoint_num:
-        self.json_path = os.path.join(model_list_dirpath, model_dirname, f'{sg_tools.PREFIX_CHECKPOINT_DIR}{checkpoint_num}', 'adapter_model', validation_json)
+        self.json_path = os.path.join(str(model_list_dirpath), str(model_dirname), f'{sg_tools.PREFIX_CHECKPOINT_DIR}{checkpoint_num}', 'adapter_model', str(validation_json))
       else:
-        self.json_path = os.path.join(model_list_dirpath, model_dirname, validation_json)
+        self.json_path = os.path.join(str(model_list_dirpath), str(model_dirname), str(validation_json))
     
     self.model_name = model_nickname or 'UnknownModel'
 

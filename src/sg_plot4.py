@@ -1,8 +1,10 @@
 import json
 import os
+from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy
 import seaborn
 import pandas
@@ -22,13 +24,13 @@ VAL_D4JS20 = 'defects4j_finetune_strict_validate_v20.json'
 class ValidationSummary:
   def __init__(
     self,
-    model_nickname: str = None, # ex. 'CodeLLaMa 13B'
-    model_list_dirpath: str = None, # ex. 'models/'
-    model_dirname: str = None, # ex. 'codellama_13b_v8'
-    checkpoint_num: int = None, # ex. 1000
-    validation_json: str = None, # ex. 'humaneval_finetune_validate.json'
+    model_nickname: Optional[str] = None, # ex. 'CodeLLaMa 13B'
+    model_list_dirpath: Optional[str] = None, # ex. 'models/'
+    model_dirname: Optional[str] = None, # ex. 'codellama_13b_v8'
+    checkpoint_num: Optional[int] = None, # ex. 1000
+    validation_json: Optional[str] = None, # ex. 'humaneval_finetune_validate.json'
 
-    force_json_path: str = None
+    force_json_path: Optional[str] = None
   ):
     self.json_path = ''
     self.model_name = ''
@@ -53,9 +55,9 @@ class ValidationSummary:
       self.json_path = force_json_path
     else:
       if checkpoint_num:
-        self.json_path = os.path.join(model_list_dirpath, model_dirname, f'{sg_tools.PREFIX_CHECKPOINT_DIR}{checkpoint_num}', 'adapter_model', validation_json)
+        self.json_path = os.path.join(str(model_list_dirpath), str(model_dirname), f'{sg_tools.PREFIX_CHECKPOINT_DIR}{checkpoint_num}', 'adapter_model', str(validation_json))
       else:
-        self.json_path = os.path.join(model_list_dirpath, model_dirname, validation_json)
+        self.json_path = os.path.join(str(model_list_dirpath), str(model_dirname), str(validation_json))
     
     self.model_name = model_nickname or 'UnknownModel'
 
@@ -414,7 +416,7 @@ def plt_gpu_memory_usage_line(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -522,7 +524,7 @@ def plt_time_line(
   # )
 
   # 범례
-  ax.get_legend().set_title(None)
+  ax.get_legend().set_title('')
   # ax.get_legend().remove()
 
   # 그래프 스타일 설정
@@ -534,7 +536,7 @@ def plt_time_line(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -969,7 +971,7 @@ def plt_gpu_memory_usage_line(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -1077,7 +1079,7 @@ def plt_time_line(
   # )
 
   # 범례
-  ax.get_legend().set_title(None)
+  ax.get_legend().set_title('')
   # ax.get_legend().remove()
 
   # 그래프 스타일 설정
@@ -1089,7 +1091,7 @@ def plt_time_line(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -1319,7 +1321,7 @@ def plt_rq1_gpu(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():
@@ -1434,7 +1436,7 @@ def plt_rq1_gpu_time(
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
     
-  ax.xaxis.set_major_formatter(plt.FuncFormatter(gb_formatter))
+  ax.xaxis.set_major_formatter(FuncFormatter(gb_formatter))
 
   # 모든 점에 대해 라벨 추가
   for idx, row in df.iterrows():

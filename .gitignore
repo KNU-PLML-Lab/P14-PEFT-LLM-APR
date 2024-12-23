@@ -4,6 +4,8 @@
 # Secrets
 .env
 wandb/
+.vscode/
+.cursorignore
 
 # Big or Dist
 __pycache__
