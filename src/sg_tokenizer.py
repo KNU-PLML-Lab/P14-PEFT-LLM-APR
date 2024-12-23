@@ -1,6 +1,6 @@
 import argparse
 import transformers
-from typing import Dict
+from typing import Dict, cast
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 
@@ -28,7 +28,7 @@ def __smart_tokenizer_and_embedding_resize(
 
 def get_tokenizer(
   args: argparse.Namespace,
-  model: transformers.PreTrainedTokenizer,
+  model: transformers.PreTrainedModel,
   force_model: str, # 'code_llama'
 ):
   tokenizer = None
@@ -58,9 +58,9 @@ def get_tokenizer(
 
   if tokenizer._pad_token is None:
     __smart_tokenizer_and_embedding_resize(
-      special_tokens_dict=dict(pad_token=DEFAULT_PAD_TOKEN),
-      tokenizer=tokenizer,
-      model=model,
+      special_tokens_dict = dict(pad_token=DEFAULT_PAD_TOKEN),
+      tokenizer = cast(transformers.PreTrainedTokenizer, tokenizer),
+      model = cast(transformers.PreTrainedModel, model),
     )
 
 
