@@ -89,7 +89,7 @@ def plt_rq2_plausible(
   # DataFrame 생성
   df = pandas.DataFrame(data)
 
-  fig, ax = plt.subplots(figsize=(9, 3))
+  fig, ax = plt.subplots(figsize=(8.5, 3))
 
   seaborn.barplot(
       ax=ax,
@@ -174,7 +174,7 @@ def plt_rq2_gpu(
     })
     print('plt_rq2_gpu', model_basename, model_size, max_allocated_peak/1000)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(4, 3))
+  fig, ax = plt.subplots(figsize=(4.5, 3.5))
 
   df = pandas.DataFrame(data)
   
@@ -269,7 +269,7 @@ def plt_rq2_time(
     })
     print('plt_rq2_time', model_basename, model_size, time_avg, all_plausible)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(4, 3))
+  fig, ax = plt.subplots(figsize=(4.4, 3.4))
   
   df = pandas.DataFrame(data)
   

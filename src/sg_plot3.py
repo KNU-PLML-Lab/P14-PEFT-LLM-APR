@@ -18,11 +18,11 @@ def plt_rq3_plausible(
   data = []
 
   model_list = [
-    ('CodeGen', '6B', 'codegen_6b_v8'),
-    ('InCoder', '6B', 'incoder_6b_v9'),
-    ('CodeLlama', '7B', 'codellama_7b_v10'),
-    ('StarCoder2', '7B', 'starcoder2_7b_v8'),
-    ('Qwen2.5\nCoder', '7B', 'qwen2.5_coder_7b_v10'),
+    ('CodeGen', '6B\n(2022)', 'codegen_6b_v8'),
+    ('InCoder', '6B\n(2022)', 'incoder_6b_v9'),
+    ('CodeLlama', '7B\n(2023)', 'codellama_7b_v10'),
+    ('StarCoder2', '7B\n(2024)', 'starcoder2_7b_v8'),
+    ('Qwen2.5 Coder', '7B\n(2024)', 'qwen2.5_coder_7b_v10'),
   ]
   for model_basename, model_size, model_dirname in model_list:
     model_nickname = f'{model_basename} {model_size}'
@@ -88,7 +88,7 @@ def plt_rq3_plausible(
   # DataFrame 생성
   df = pandas.DataFrame(data)
 
-  fig, ax = plt.subplots(figsize=(9, 3))
+  fig, ax = plt.subplots(figsize=(8.5, 3))
 
   seaborn.barplot(
       ax=ax,

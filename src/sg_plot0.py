@@ -13,6 +13,14 @@ from sg_plot_common import ValidationSummary, VAL_HE, VAL_QB, VAL_D4JS, VAL_D4JS
 
 
 
+def plt_codegen_incoder_per_bench_time(
+    model_list_dirpath: str,
+):
+  data = []
+  
+
+
+
 def plt_gpu_memory_usage_line(
   model_list_dirpath: str, # ex. 'models/'
 ):
