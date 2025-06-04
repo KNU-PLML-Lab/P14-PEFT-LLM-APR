@@ -86,10 +86,9 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_defects4j --strict_defects4j \
   --do_generate
 
-# 여기까지
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10 \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
@@ -202,32 +201,103 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
 # 여기까지
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10 \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_humaneval \
+  --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10 \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_quixbugs \
+  --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10 \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
+  --do_validate
+
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
+  --do_validate
+
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
+  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
   --do_validate
 ```
 

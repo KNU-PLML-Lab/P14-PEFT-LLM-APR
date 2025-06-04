@@ -155,7 +155,6 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_validate
 
 
-#여기까지
 CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
   --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
   --output_dir ~/WorkspaceLabModels/codellama_13b_v9 \
@@ -173,6 +172,7 @@ CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_quixbugs \
+  --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
@@ -204,6 +204,7 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_quixbugs \
+  --do_generate \
   --do_validate
 
 CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
@@ -214,6 +215,74 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --num_beams 10 \
   --max_new_tokens 128 \
   --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_validate
+
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
+  --do_validate
+
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codellama_13b \
+  --output_dir ~/WorkspaceLabModels/codellama_13b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
   --do_validate
 ```
 

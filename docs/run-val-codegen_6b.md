@@ -150,6 +150,64 @@ CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
   --max_new_tokens 64 \
   --do_defects4j --strict_defects4j --validate_result_split_defects4j \
   --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_humaneval \
+  --do_validate &&\
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_quixbugs \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_humaneval \
+  --do_validate &&\
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_quixbugs \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/codegen_6b \
+  --output_dir ~/WorkspaceLabModels/codegen_6b_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 64 \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_validate
 ```
 
 

@@ -143,6 +143,80 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --trust_remote_code \
   --do_defects4j --strict_defects4j --validate_result_split_defects4j \
   --do_validate
+
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
+  --do_validate
+
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_humaneval \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_quixbugs \
+  --do_generate \
+  --do_validate
+
+CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
+  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
+  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
+  --do_generate \
+  --do_validate
 ```
 
 
