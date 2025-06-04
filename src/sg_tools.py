@@ -17,31 +17,31 @@ PREFIX_CHECKPOINT_DIR = transformers.trainer_utils.PREFIX_CHECKPOINT_DIR
 
 
 
-def is_ipex_available():
-  """
-    __DEPRECATED__
-    Intel Extension for PyTorch가 사용 가능한지 확인합니다.
-  """
-  def get_major_and_minor_from_version(full_version):
-    return str(packaging.version.parse(full_version).major) + "." + str(packaging.version.parse(full_version).minor)
+# def is_ipex_available():
+#   """
+#     __DEPRECATED__
+#     Intel Extension for PyTorch가 사용 가능한지 확인합니다.
+#   """
+#   def get_major_and_minor_from_version(full_version):
+#     return str(packaging.version.parse(full_version).major) + "." + str(packaging.version.parse(full_version).minor)
 
-  _torch_version = importlib.metadata.version("torch")
-  if importlib.util.find_spec("intel_extension_for_pytorch") is None:
-    return False
-  _ipex_version = "N/A"
-  try:
-    _ipex_version = importlib.metadata.version("intel_extension_for_pytorch")
-  except importlib.metadata.PackageNotFoundError:
-    return False
-  torch_major_and_minor = get_major_and_minor_from_version(_torch_version)
-  ipex_major_and_minor = get_major_and_minor_from_version(_ipex_version)
-  if torch_major_and_minor != ipex_major_and_minor:
-    warnings.warn(
-      f"Intel Extension for PyTorch {ipex_major_and_minor} needs to work with PyTorch {ipex_major_and_minor}.*,"
-      f" but PyTorch {_torch_version} is found. Please switch to the matching version and run again."
-    )
-    return False
-  return True
+#   _torch_version = importlib.metadata.version("torch")
+#   if importlib.util.find_spec("intel_extension_for_pytorch") is None:
+#     return False
+#   _ipex_version = "N/A"
+#   try:
+#     _ipex_version = importlib.metadata.version("intel_extension_for_pytorch")
+#   except importlib.metadata.PackageNotFoundError:
+#     return False
+#   torch_major_and_minor = get_major_and_minor_from_version(_torch_version)
+#   ipex_major_and_minor = get_major_and_minor_from_version(_ipex_version)
+#   if torch_major_and_minor != ipex_major_and_minor:
+#     warnings.warn(
+#       f"Intel Extension for PyTorch {ipex_major_and_minor} needs to work with PyTorch {ipex_major_and_minor}.*,"
+#       f" but PyTorch {_torch_version} is found. Please switch to the matching version and run again."
+#     )
+#     return False
+#   return True
 
 
 
@@ -86,8 +86,8 @@ def get_last_checkpoint(checkpoint_dir):
 
 def save_model_struct(
   model,
-  path=None,
-  model_name: str = None
+  path = None,
+  model_name = None
 ):
   """
     디버깅을 위해 모델의 구조를 파일로 저장합니다.
@@ -223,7 +223,7 @@ def run_java_to_generate_input(
   rem_start: int,
   rem_end: int,
   tmp_file: str,
-  config: dict = None
+  config: dict|None = None
 ):
   """
     Java 프로젝트를 실행해 모델평가에 사용할 입력을 생성해 tmp_file로 저장
@@ -281,6 +281,8 @@ def raw_output_to_patch(
       return ''
     except Exception as e:
       return ''
+  else:
+    return ''
 
 
 
