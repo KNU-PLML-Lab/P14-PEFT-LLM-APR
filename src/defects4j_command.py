@@ -24,12 +24,14 @@ def checkout_defects4j_project(project, bug_id, tmp_dir):
   command = "defects4j checkout " + " -p " + project + " -v " + bug_id + " -w " + tmp_dir
   p = subprocess.Popen([command], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p.wait()
+  p.kill()
 
 
 def compile_fix(project_dir):
   os.chdir(project_dir)
   p = subprocess.Popen(["defects4j", "compile"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out, err = p.communicate()
+  p.kill()
   if "FAIL" in str(err) or "FAIL" in str(out):
     return False
   return True
@@ -43,10 +45,11 @@ def command_with_timeout(cmd, timeout=300):
       break
     seconds_passed = time.time() - t_beginning
     if timeout and seconds_passed > timeout:
-      p.terminate()
+      p.kill()
       return 'TIMEOUT', 'TIMEOUT'
     time.sleep(1)
   out, err = p.communicate()
+  p.kill()
   return out, err
 
 
