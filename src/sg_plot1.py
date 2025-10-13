@@ -541,11 +541,13 @@ def plt_rq1_gpu(
   max_time = df['gpu_memory_usage_peak'].max()
   min_time = df['gpu_memory_usage_peak'].min()
   diff_time = max_time - min_time
-  ax.set_xlim(min_time - diff_time * 0.2, max_time + diff_time * 0.2)
   max_plausible = df['plausible'].max()
   min_plausible = df['plausible'].min()
   diff_plausible = max_plausible - min_plausible
+  # ax.set_xlim(min_time - diff_time * 0.2, max_time + diff_time * 0.2)
+  ax.set_xlim(0.0, 25000.0)
   ax.set_ylim(min_plausible - diff_plausible * 0.2, max_plausible + diff_plausible * 0.05)
+  ax.set_ylim(130, 190)
 
 
   def gb_formatter(x, p):
@@ -646,17 +648,19 @@ def plt_rq1_time(
     legend.remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Generation Time')
-  ax.set_xlabel('Time Avg. (s)')
+  ax.set_title('Patch Inference Time')
+  ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
   max_time = df['time_avg'].max()
   min_time = df['time_avg'].min()
   diff_time = max_time - min_time
-  ax.set_xlim(min_time - diff_time * 0.2, max_time + diff_time * 0.2)
   max_plausible = df['plausible'].max()
   min_plausible = df['plausible'].min()
   diff_plausible = max_plausible - min_plausible
+  # ax.set_xlim(min_time - diff_time * 0.2, max_time + diff_time * 0.2)
+  ax.set_xlim(0.0, 25000.0)
   ax.set_ylim(min_plausible - diff_plausible * 0.2, max_plausible + diff_plausible * 0.05)
+  ax.set_ylim(130, 190)
 
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'

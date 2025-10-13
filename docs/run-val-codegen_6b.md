@@ -30,8 +30,6 @@ CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
   --do_defects4j --strict_defects4j \
   --do_generate \
   --do_validate
-
-
 ```
 
 

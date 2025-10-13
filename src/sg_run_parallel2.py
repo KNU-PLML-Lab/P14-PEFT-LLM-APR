@@ -1,6 +1,9 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import subprocess
+# dotenv 패키지가 있으면.env 파일의 환경 변수를 로드합니다.
+from dotenv import load_dotenv
+load_dotenv()
 
 def last_three_line_log(log: str) -> str:
   return '\n'.join(log.split('\n')[-3:])
@@ -35,24 +38,67 @@ async def main(nested_commands):
 
 if __name__ == "__main__":
   commands = [
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a0_start" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
+    ['python -m src.sg_tg_report 테스트 시작'],
 
     ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+CUDA_VISIBLE_DEVICES="3" python ./src/sg_finetune.py \
+    --run_name qwen2.5_coder_7b_v15 \
+    --model_name_or_path ~/wlm/qwen2.5_coder_7b \
+    --output_dir ~/wlm/qwen2.5_coder_7b_v15 \
+    --dataset ./data/finetune_training.jsonl \
+    --validation_dataset ./data/finetune_validation.jsonl \
+    --do_train \
+    --do_eval \
+    --learning_rate 0.00001 \
+    --lora_r=256 \
+    --lora_alpha=512 \
+    --seed 72 \
+    --max_length 1024 \
+    --per_device_train_batch_size 4 \
+    --gradient_checkpointing \
+    --gradient_accumulation_steps 1 \
+    --num_train_epochs 1 \
+    --eval_steps 2000 \
+    --save_steps 2000 \
+    --specific_save_steps "25,250,2500,12500" \
+    --eval_dataset_size 1000 \
+    --per_device_eval_batch_size 1 \
+    --logging_steps 10 \
+    --report_to wandb
+    """],
+    ['python -m src.sg_tg_report qwen2.5_coder_7b_v15 학습 끝'],
+
+    ["""
+CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
+  --model_name_or_path ~/wlm/qwen2.5_coder_7b \
+  --output_dir ~/wlm/qwen2.5_coder_7b_v15 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --trust_remote_code \
   --do_humaneval \
-  --do_generate \
+  --do_quixbugs \
+  --do_defects4j --strict_defects4j \
+  --do_generate
+    """],
+    ['python -m src.sg_tg_report qwen2.5_coder_7b_v15 생성 끝'],
+
+    ["""
+CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
+  --model_name_or_path ~/wlm/qwen2.5_coder_7b \
+  --output_dir ~/wlm/qwen2.5_coder_7b_v15 \
+  --do_sample \
+  --seed 0 \
+  --num_beams 10 \
+  --max_new_tokens 128 \
+  --trust_remote_code \
+  --do_humaneval \
   --do_validate
     ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+CUDA_VISIBLE_DEVICES="2" python src/sg_bench.py \
+  --model_name_or_path ~/wlm/qwen2.5_coder_7b \
+  --output_dir ~/wlm/qwen2.5_coder_7b_v15 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
@@ -63,182 +109,22 @@ CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
   --do_validate
     """],
     ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a1_deepseek_coder_v2_lite_base_v11" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
+    ['python -m src.sg_tg_report qwen2.5_coder_7b_v15 HE QB 검증 끝'],
 
     ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --trust_remote_code \
-  --do_humaneval \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --trust_remote_code \
-  --do_quixbugs \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a2_deepseek_coder_v2_lite_base_v12" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v11 \
+CUDA_VISIBLE_DEVICES="3" python src/sg_bench.py \
+  --model_name_or_path ~/wlm/qwen2.5_coder_7b \
+  --output_dir ~/wlm/qwen2.5_coder_7b_v15 \
   --do_sample \
   --seed 0 \
   --num_beams 10 \
   --max_new_tokens 128 \
   --trust_remote_code \
   --do_defects4j --strict_defects4j --validate_result_split_defects4j \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/deepseek_coder_v2_lite_base \
-  --output_dir ~/WorkspaceLabModels/deepseek_coder_v2_lite_base_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --trust_remote_code \
-  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
-  --do_generate \
   --do_validate
     """],
     ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=adf1" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_humaneval \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_quixbugs \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a3_codellama_34b_v10_2" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_humaneval \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_quixbugs \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a4_codellama_34b_v11" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v10_2 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v11 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=adf2" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_humaneval \
-  --do_generate \
-  --do_validate
-    ""","""
-CUDA_VISIBLE_DEVICES="1" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_quixbugs \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=a5_codellama_34b_v12" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
-
-    ["""
-CUDA_VISIBLE_DEVICES="0" python src/sg_bench.py \
-  --model_name_or_path ~/WorkspaceLabModels/codellama_34b \
-  --output_dir ~/WorkspaceLabModels/codellama_34b_v12 \
-  --do_sample \
-  --seed 0 \
-  --num_beams 10 \
-  --max_new_tokens 128 \
-  --do_defects4j --strict_defects4j --validate_result_split_defects4j \
-  --do_generate \
-  --do_validate
-    """],
-    ["killall java"],
-    ['{ curl -s -m 10 "https://api.telegram.org/bot293512843%3AAAG1t-wJZ6pk_Kxf17XidWcQwFFqVW2XSfM/sendMessage?chat_id=-1002326438945&text=adf3" 2> /dev/null > /dev/null & } 2>/dev/null;disown &>/dev/null'],
+    ['python -m src.sg_tg_report qwen2.5_coder_7b_v15 D4J 검증 끝'],
 
     # ["""
 

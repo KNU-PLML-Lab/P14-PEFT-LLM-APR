@@ -96,7 +96,7 @@ def plt_rq3_plausible(
       x='model',
       y='plausible',
       hue='bench',
-      palette='bright',
+      palette='pastel',
   )
 
   # x축 그리드 추가
@@ -172,7 +172,7 @@ def plt_rq3_gpu(
     })
     print('plt_rq2_gpu', model_basename, model_size, max_allocated_peak/1000)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(4, 3))
+  fig, ax = plt.subplots(figsize=(4.15, 3))
 
   df = pandas.DataFrame(data)
   
@@ -195,6 +195,8 @@ def plt_rq3_gpu(
   ax.set_title('GPU Memory Efficiency')
   ax.set_xlabel('GPU Memory Usage Peak (GB)')
   ax.set_ylabel('Plausible')
+  ax.set_xlim(0, 20000)
+  ax.set_ylim(160, 260)
 
 
   def gb_formatter(x, p):
@@ -266,7 +268,7 @@ def plt_rq3_time(
     })
     print('plt_rq2_time', model_basename, model_size, time_avg, all_plausible)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(5.5, 3))
+  fig, ax = plt.subplots(figsize=(5.65, 3))
   
   df = pandas.DataFrame(data)
   
@@ -286,10 +288,11 @@ def plt_rq3_time(
   # ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Generation Time')
-  ax.set_xlabel('Time Avg. (s)')
+  ax.set_title('Patch Inference Time')
+  ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
-  # ax.set_xlim(0, 40000)
+  ax.set_xlim(0, 20000)
+  ax.set_ylim(160, 260)
 
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'

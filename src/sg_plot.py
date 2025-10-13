@@ -15,7 +15,7 @@ import sg_plot3
 import sg_plot4
 
 if __name__ == "__main__":
-  model_list_dirpath = os.path.expanduser('~/WorkspaceLabModels')
+  model_list_dirpath = os.path.expanduser('~/wlm')
   # sg_plot0.plt_steps2()
   # sg_plot0.plt_gpu_memory_usage_line(model_list_dirpath=model_list_dirpath)
   # sg_plot0.plt_time_line(model_list_dirpath=model_list_dirpath)
@@ -25,11 +25,11 @@ if __name__ == "__main__":
   # sg_plot1.plt_rq1_gpu(model_list_dirpath=model_list_dirpath)
   # sg_plot1.plt_rq1_time(model_list_dirpath=model_list_dirpath)
 
-  # sg_plot2.plt_rq2_plausible(model_list_dirpath=model_list_dirpath)
-  sg_plot2.plt_rq2_gpu(model_list_dirpath=model_list_dirpath)
-  sg_plot2.plt_rq2_time(model_list_dirpath=model_list_dirpath)
+  sg_plot2.plt_rq2_plausible(model_list_dirpath=model_list_dirpath)
+  # sg_plot2.plt_rq2_gpu(model_list_dirpath=model_list_dirpath)
+  # sg_plot2.plt_rq2_time(model_list_dirpath=model_list_dirpath)
 
-  # sg_plot3.plt_rq3_plausible(model_list_dirpath=model_list_dirpath)
+  sg_plot3.plt_rq3_plausible(model_list_dirpath=model_list_dirpath)
   # sg_plot3.plt_rq3_gpu(model_list_dirpath=model_list_dirpath)
   # sg_plot3.plt_rq3_time(model_list_dirpath=model_list_dirpath)
 

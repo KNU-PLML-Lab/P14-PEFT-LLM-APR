@@ -72,6 +72,13 @@ def plt_rq2_plausible(
       'plausible': defects4j_strict_20_validation_summary.plausible
     })
 
+    print(f'plt_rq2_plausible {model_nickname} '
+          +f'HE: {humaneval_java_validation_summary.plausible} '
+          +f'QB: {quixbugs_validation_summary.plausible} '
+          +f'D4J12: {defects4j_strict_12_validation_summary.plausible} '
+          +f'D4J20: {defects4j_strict_20_validation_summary.plausible} '
+          +f'TOTAL: {humaneval_java_validation_summary.plausible + quixbugs_validation_summary.plausible + defects4j_strict_12_validation_summary.plausible + defects4j_strict_20_validation_summary.plausible}')
+
   MAX_HUMAN_EVAL_JAVA = 164.0
   MAX_QUIXBUGS = 40.0
   MAX_DEFECTS4J_12 = 130.0
@@ -97,7 +104,7 @@ def plt_rq2_plausible(
       x='model',
       y='plausible',
       hue='bench',
-      palette='bright',
+      palette='pastel',
   )
 
   # x축 그리드 추가
@@ -190,14 +197,15 @@ def plt_rq2_gpu(
   )
 
   # 범례
-  # ax.get_legend().set_title(None)
-  ax.get_legend().remove()
+  ax.get_legend().set_title(None)
+  # ax.get_legend().remove()
 
   # 그래프 스타일 설정
   ax.set_title('GPU Memory Efficiency')
   ax.set_xlabel('GPU Memory Usage Peak (GB)')
   ax.set_ylabel('Plausible')
-
+  ax.set_xlim(5000, 25000)
+  ax.set_ylim(100, 250)
 
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'
@@ -285,14 +293,15 @@ def plt_rq2_time(
   )
 
   # 범례
-  ax.get_legend().set_title('')
-  # ax.get_legend().remove()
+  # ax.get_legend().set_title('')
+  ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Generation Time')
-  ax.set_xlabel('Time Avg. (s)')
+  ax.set_title('Patch Inference Time')
+  ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
-  # ax.set_xlim(0, 40000)
+  ax.set_xlim(5000, 25000)
+  ax.set_ylim(100, 250)
 
   def gb_formatter(x, p):
     return f'{x/1000:.1f}'

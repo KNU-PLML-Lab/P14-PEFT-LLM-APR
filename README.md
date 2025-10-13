@@ -1,4 +1,7 @@
 # PL&ML YKL Project 14
+- [https://github.com/KNU-PLML-Lab/P14-PEFT-LLM-APR](https://github.com/KNU-PLML-Lab/P14-PEFT-LLM-APR)
+- [https://github.com/knu-plml/apr-using-qlora](https://github.com/knu-plml/apr-using-qlora)
+
 ## Dependencies
 - conda
 (inherit from Defects4J 2.0.1)
