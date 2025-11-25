@@ -45,8 +45,5 @@ cd ..
 # Init Conda
 conda env update --prefix ./.conda --file env14_5.yml
 conda activate ./.conda
-
-# Run the project
-python main.py --task train
 ```
 - For more command information, please refer to `./docs/` folder.
