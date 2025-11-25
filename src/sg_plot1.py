@@ -535,8 +535,8 @@ def plt_rq1_gpu(
     legend.remove()
 
   # 그래프 스타일 설정
-  ax.set_title('GPU Memory Efficiency')
-  ax.set_xlabel('GPU Memory Usage Peak (GB)')
+  # ax.set_title('GPU Memory Efficiency')
+  ax.set_xlabel('GPU Peak Memory Usage (GB)')
   ax.set_ylabel('Plausible')
   max_time = df['gpu_memory_usage_peak'].max()
   min_time = df['gpu_memory_usage_peak'].min()
@@ -648,7 +648,7 @@ def plt_rq1_time(
     legend.remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Inference Time')
+  # ax.set_title('Patch Inference Time')
   ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
   max_time = df['time_avg'].max()

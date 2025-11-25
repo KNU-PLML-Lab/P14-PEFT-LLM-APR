@@ -172,7 +172,7 @@ def plt_rq3_gpu(
     })
     print('plt_rq2_gpu', model_basename, model_size, max_allocated_peak/1000)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(4.15, 3))
+  fig, ax = plt.subplots(figsize=(4.5, 3.5))
 
   df = pandas.DataFrame(data)
   
@@ -192,8 +192,9 @@ def plt_rq3_gpu(
   ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('GPU Memory Efficiency')
-  ax.set_xlabel('GPU Memory Usage Peak (GB)')
+  # ax.set_title('GPU Memory Efficiency')
+  ax.set_title(' ')
+  ax.set_xlabel('GPU Peak Memory Usage (GB)')
   ax.set_ylabel('Plausible')
   ax.set_xlim(0, 20000)
   ax.set_ylim(160, 260)
@@ -268,7 +269,7 @@ def plt_rq3_time(
     })
     print('plt_rq2_time', model_basename, model_size, time_avg, all_plausible)
   seaborn.set_theme(style="whitegrid")
-  fig, ax = plt.subplots(figsize=(5.65, 3))
+  fig, ax = plt.subplots(figsize=(4.5, 3.5))
   
   df = pandas.DataFrame(data)
   
@@ -284,11 +285,12 @@ def plt_rq3_time(
   )
 
   # 범례
-  ax.get_legend().set_title('')
-  # ax.get_legend().remove()
+  # ax.get_legend().set_title('')
+  ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Inference Time')
+  # ax.set_title('Patch Inference Time')
+  ax.set_title(' ')
   ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
   ax.set_xlim(0, 20000)
@@ -307,7 +309,7 @@ def plt_rq3_time(
   ax.grid(True, linestyle='--', alpha=0.7)
 
   # 범례 위치 조정
-  plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', title='')
+  # plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', title='')
   
   # 여백 조정
   plt.tight_layout()

@@ -25,12 +25,12 @@ if __name__ == "__main__":
   # sg_plot1.plt_rq1_gpu(model_list_dirpath=model_list_dirpath)
   # sg_plot1.plt_rq1_time(model_list_dirpath=model_list_dirpath)
 
-  sg_plot2.plt_rq2_plausible(model_list_dirpath=model_list_dirpath)
+  # sg_plot2.plt_rq2_plausible(model_list_dirpath=model_list_dirpath)
   # sg_plot2.plt_rq2_gpu(model_list_dirpath=model_list_dirpath)
   # sg_plot2.plt_rq2_time(model_list_dirpath=model_list_dirpath)
 
-  sg_plot3.plt_rq3_plausible(model_list_dirpath=model_list_dirpath)
-  # sg_plot3.plt_rq3_gpu(model_list_dirpath=model_list_dirpath)
+  # sg_plot3.plt_rq3_plausible(model_list_dirpath=model_list_dirpath)
+  sg_plot3.plt_rq3_gpu(model_list_dirpath=model_list_dirpath)
   # sg_plot3.plt_rq3_time(model_list_dirpath=model_list_dirpath)
 
   # sg_plot4.plt_rq4_plausible_ex1(model_list_dirpath=model_list_dirpath)

@@ -201,8 +201,8 @@ def plt_rq2_gpu(
   # ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('GPU Memory Efficiency')
-  ax.set_xlabel('GPU Memory Usage Peak (GB)')
+  # ax.set_title('GPU Memory Efficiency')
+  ax.set_xlabel('GPU Peak Memory Usage (GB)')
   ax.set_ylabel('Plausible')
   ax.set_xlim(5000, 25000)
   ax.set_ylim(100, 250)
@@ -297,7 +297,7 @@ def plt_rq2_time(
   ax.get_legend().remove()
 
   # 그래프 스타일 설정
-  ax.set_title('Patch Inference Time')
+  # ax.set_title('Patch Inference Time')
   ax.set_xlabel('Avg. Time (s)')
   ax.set_ylabel('Plausible')
   ax.set_xlim(5000, 25000)
