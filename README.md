@@ -1,6 +1,7 @@
 # Automated Program Repair Using Quantized Language Models and Parameter-Efficient Fine-Tuning
 - [https://github.com/KNU-PLML-Lab/P14-PEFT-LLM-APR](https://github.com/KNU-PLML-Lab/P14-PEFT-LLM-APR)
 - [https://github.com/knu-plml/apr-using-qlora](https://github.com/knu-plml/apr-using-qlora)
+This research presents a comprehensive evaluation of parameter-efficient fine-tuning methods across various language models to reduce memory usage while maintaining APR effectiveness.
 
 ## Dependencies
 - conda
